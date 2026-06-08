@@ -304,3 +304,61 @@ CREATE TABLE IF NOT EXISTS onboarding_drafts (
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_onboarding_drafts_creator ON onboarding_drafts(created_by);
+
+-- ============================================================================
+-- 3-Level Approval Workflow (Maker → Checker → Super Admin)  — idempotent
+-- A company is created by a Maker, verified by a Checker, then finally approved
+-- and ACTIVATED by a Super Admin (which provisions the admin account, wallet,
+-- invoice and final company code). See approvals.service.js for the state machine.
+-- ============================================================================
+
+-- ── Portal user roles: add maker + checker alongside super_admin/admin ───────
+ALTER TABLE super_admins DROP CONSTRAINT IF EXISTS super_admins_role_check;
+ALTER TABLE super_admins
+  ADD CONSTRAINT super_admins_role_check
+  CHECK (role IN ('super_admin', 'admin', 'maker', 'checker'));
+
+-- ── companies: expanded workflow status + audit columns + stored payload ─────
+-- New default is 'draft'; existing rows keep whatever status they already have.
+-- Widen status: 'pending_super_admin_approval' (28 chars) exceeds the old VARCHAR(20).
+ALTER TABLE companies ALTER COLUMN status TYPE VARCHAR(40);
+ALTER TABLE companies ALTER COLUMN status SET DEFAULT 'draft';
+ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_status_check;
+ALTER TABLE companies
+  ADD CONSTRAINT companies_status_check
+  CHECK (status IN (
+    'draft', 'submitted', 'under_checker_review', 'changes_requested',
+    'checker_approved', 'pending_super_admin_approval',
+    'active', 'rejected', 'suspended', 'inactive'
+  ));
+
+-- Full wizard payload is stored here at submit-time and used by the Super Admin
+-- to provision (admin account / wallet / invoice / modules) at activation.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS onboarding_payload JSONB;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS provisioned   BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Workflow actor + timestamp trail (created_by = Maker who created the record).
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS submitted_by  UUID REFERENCES super_admins(id) ON DELETE SET NULL;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS reviewed_by   UUID REFERENCES super_admins(id) ON DELETE SET NULL; -- Checker
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS approved_by   UUID REFERENCES super_admins(id) ON DELETE SET NULL; -- Super Admin
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS submitted_at  TIMESTAMPTZ;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS reviewed_at   TIMESTAMPTZ;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS approved_at   TIMESTAMPTZ;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS review_notes  TEXT;
+
+-- ── company_approval_history: full append-only approval/audit trail ──────────
+CREATE TABLE IF NOT EXISTS company_approval_history (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id  UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  action      VARCHAR(40) NOT NULL,   -- submit | start_review | checker_approve |
+                                      -- request_changes | reject | activate | suspend | reactivate | resubmit
+  from_status VARCHAR(40),
+  to_status   VARCHAR(40),
+  actor_id    UUID REFERENCES super_admins(id) ON DELETE SET NULL,
+  actor_name  VARCHAR(150),
+  actor_email VARCHAR(190),
+  actor_role  VARCHAR(40),
+  notes       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_approval_history_company ON company_approval_history(company_id, created_at);

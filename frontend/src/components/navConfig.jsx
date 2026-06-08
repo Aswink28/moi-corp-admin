@@ -6,36 +6,46 @@ import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import CardMembershipRoundedIcon from '@mui/icons-material/CardMembershipRounded'
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
 
-// Grouped sidebar navigation. Each item maps to a route in App.jsx.
-export const NAV_GROUPS = [
-  {
-    heading: 'Overview',
-    items: [{ to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> }],
-  },
-  {
-    heading: 'Management',
-    items: [
-      { to: '/companies', label: 'Companies', icon: <BusinessRoundedIcon /> },
-      { to: '/company-onboarding', label: 'Onboard Company', icon: <AddBusinessRoundedIcon /> },
-      { to: '/company-admins', label: 'Company Admins', icon: <AdminPanelSettingsRoundedIcon /> },
-      { to: '/configuration', label: 'Configuration', icon: <TuneRoundedIcon /> },
-    ],
-  },
-  {
-    heading: 'Billing',
-    items: [
-      { to: '/subscriptions', label: 'Subscriptions', icon: <CardMembershipRoundedIcon /> },
-      { to: '/wallets', label: 'Wallets', icon: <AccountBalanceWalletRoundedIcon /> },
-    ],
-  },
-  {
-    heading: 'System',
-    items: [{ to: '/audit-logs', label: 'Audit Logs', icon: <HistoryRoundedIcon /> }],
-  },
-]
+// Canonical nav items. Each maps to a route in App.jsx.
+const ITEMS = {
+  dashboard: { to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> },
+  approvals: { to: '/approvals', label: 'Approvals', icon: <FactCheckRoundedIcon /> },
+  onboard: { to: '/company-onboarding', label: 'Onboard Company', icon: <AddBusinessRoundedIcon /> },
+  companies: { to: '/companies', label: 'Companies', icon: <BusinessRoundedIcon /> },
+  admins: { to: '/company-admins', label: 'Company Admins', icon: <AdminPanelSettingsRoundedIcon /> },
+  configuration: { to: '/configuration', label: 'Configuration', icon: <TuneRoundedIcon /> },
+  subscriptions: { to: '/subscriptions', label: 'Subscriptions', icon: <CardMembershipRoundedIcon /> },
+  wallets: { to: '/wallets', label: 'Wallets', icon: <AccountBalanceWalletRoundedIcon /> },
+  audit: { to: '/audit-logs', label: 'Audit Logs', icon: <HistoryRoundedIcon /> },
+}
 
-export const ALL_NAV = NAV_GROUPS.flatMap((g) => g.items)
+/** Role-aware sidebar groups. */
+export function navGroupsFor(role) {
+  if (role === 'maker') {
+    return [
+      { heading: 'Overview', items: [ITEMS.dashboard] },
+      { heading: 'Onboarding', items: [ITEMS.onboard, { ...ITEMS.approvals, label: 'My Requests' }] },
+    ]
+  }
+  if (role === 'checker') {
+    return [
+      { heading: 'Overview', items: [ITEMS.dashboard] },
+      { heading: 'Review', items: [{ ...ITEMS.approvals, label: 'Review Queue' }, ITEMS.companies] },
+    ]
+  }
+  // super_admin / admin
+  return [
+    { heading: 'Overview', items: [ITEMS.dashboard] },
+    { heading: 'Approvals', items: [{ ...ITEMS.approvals, label: 'Final Approvals' }] },
+    { heading: 'Management', items: [ITEMS.companies, ITEMS.onboard, ITEMS.admins, ITEMS.configuration] },
+    { heading: 'Billing', items: [ITEMS.subscriptions, ITEMS.wallets] },
+    { heading: 'System', items: [ITEMS.audit] },
+  ]
+}
+
+export const ALL_NAV = Object.values(ITEMS)
 
 export function findNav(pathname) {
   return ALL_NAV.find((n) => (n.to === '/' ? pathname === '/' : pathname.startsWith(n.to)))

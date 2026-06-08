@@ -4,7 +4,9 @@ import { alpha, useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 import HubRoundedIcon from '@mui/icons-material/HubRounded'
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded'
-import { NAV_GROUPS } from './navConfig'
+import { navGroupsFor } from './navConfig'
+import { useAuth } from '../context/AuthContext'
+import { roleLabel } from '../constants/workflow'
 
 export const SIDEBAR_W = 264
 export const SIDEBAR_W_COLLAPSED = 76
@@ -42,6 +44,8 @@ function NavItem({ item, collapsed }) {
 }
 
 export default function Sidebar({ collapsed, onToggle }) {
+  const { user } = useAuth()
+  const groups = navGroupsFor(user?.role)
   const w = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W
   return (
     <Box
@@ -62,7 +66,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           {!collapsed && (
             <Box sx={{ lineHeight: 1.05 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Company Admin</Typography>
-              <Typography sx={{ fontSize: 11, color: '#94a3b8' }}>Onboarding Portal</Typography>
+              <Typography sx={{ fontSize: 11, color: '#94a3b8' }}>{roleLabel(user?.role)} Portal</Typography>
             </Box>
           )}
         </Box>
@@ -74,7 +78,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       </Box>
 
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 1 }}>
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <Box key={group.heading} sx={{ mb: 1 }}>
             {!collapsed && (
               <Typography sx={{ px: 3, py: 0.75, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748b' }}>

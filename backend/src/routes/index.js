@@ -10,6 +10,7 @@ const subscriptions = require('./subscriptions.routes')
 const wallets = require('./wallets.routes')
 const auditLogs = require('./auditLogs.routes')
 const onboarding = require('./onboarding.routes')
+const approvals = require('./approvals.routes')
 
 const router = express.Router()
 
@@ -26,5 +27,6 @@ router.use('/subscriptions', subscriptions)
 router.use('/wallets', wallets)
 router.use('/audit-logs', auditLogs)
 router.use('/onboarding', onboarding)
+router.use('/approvals', approvals)
 
 module.exports = router

@@ -10,8 +10,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
 import CloudDoneRoundedIcon from '@mui/icons-material/CloudDoneRounded'
 import CloudSyncRoundedIcon from '@mui/icons-material/CloudSyncRounded'
-import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded'
-import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded'
+import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded'
 
 import { PageHeader, ConfirmDialog } from '../components/ui'
@@ -114,23 +113,17 @@ export default function CompanyOnboarding() {
     }
   }
 
-  async function submit(sendEmail) {
+  async function submit() {
     setSubmitting(true)
     try {
-      const result = await onboardingApi.createCompany(data, sendEmail)
+      const result = await onboardingApi.submitCompany(data)
       setConfirm(null)
-      const tempPwd = result?.admin?.temp_password
       notify(
-        `Company "${result?.company?.name}" created${sendEmail ? ' and welcome email sent' : ''}.${tempPwd ? ` Temp password: ${tempPwd}` : ''}`,
+        `"${result?.company?.name}" submitted for approval — a Checker will review it next.`,
         'success',
-        { title: 'Onboarded', duration: 8000 }
+        { title: 'Submitted for approval', duration: 7000 }
       )
-      // Offer the generated invoice in a new tab.
-      const invoiceId = result?.invoice?.id
-      if (invoiceId) {
-        window.open(onboardingApi.getInvoiceHtmlUrl(invoiceId), '_blank', 'noopener,noreferrer')
-      }
-      navigate('/companies')
+      navigate('/approvals')
     } catch (e) {
       notify(errMsg(e), 'error')
     } finally {
@@ -231,20 +224,11 @@ export default function CompanyOnboarding() {
                 <Button
                   variant="contained"
                   color="primary"
-                  startIcon={<RocketLaunchRoundedIcon />}
-                  onClick={() => setConfirm({ sendEmail: false })}
+                  startIcon={<SendRoundedIcon />}
+                  onClick={() => setConfirm(true)}
                   disabled={submitting || !currentValid}
                 >
-                  Create Company
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<MarkEmailReadRoundedIcon />}
-                  onClick={() => setConfirm({ sendEmail: true })}
-                  disabled={submitting || !currentValid}
-                >
-                  Create &amp; Send Welcome Email
+                  Submit for Approval
                 </Button>
               </Stack>
             ) : (
@@ -264,15 +248,11 @@ export default function CompanyOnboarding() {
       <ConfirmDialog
         open={!!confirm}
         color="primary"
-        title={confirm?.sendEmail ? 'Create company & send welcome email?' : 'Create company?'}
-        message={
-          confirm?.sendEmail
-            ? `This provisions "${data?.company?.name || 'the company'}" — admin account, subscription, modules, wallet and invoice — and emails the welcome message with login credentials to ${data?.admin?.email || 'the admin'}.`
-            : `This provisions "${data?.company?.name || 'the company'}" — admin account, subscription, modules, wallet and invoice. No welcome email will be sent; you'll receive the temporary password to hand over manually.`
-        }
-        confirmLabel={confirm?.sendEmail ? 'Create & Send' : 'Create Company'}
+        title="Submit for approval?"
+        message={`This submits "${data?.company?.name || 'the company'}" into the approval workflow. A Checker verifies the details, then a Super Admin approves and activates it (provisioning the admin account, wallet and invoice). You can track progress under My Requests.`}
+        confirmLabel="Submit for Approval"
         loading={submitting}
-        onConfirm={() => submit(!!confirm?.sendEmail)}
+        onConfirm={() => submit()}
         onClose={() => !submitting && setConfirm(null)}
       />
 

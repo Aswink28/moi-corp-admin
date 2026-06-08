@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Inter is loaded via <link> in index.html for reliable, non-render-blocking fetch. */
 
 :root {
   --ca-sidebar-w: 264px;
@@ -18,7 +18,7 @@ body,
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

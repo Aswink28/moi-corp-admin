@@ -1,12 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Box, LinearProgress } from '@mui/material'
-import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedRoute, { RoleRoute } from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 
 // Code-split the authenticated pages.
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Approvals = lazy(() => import('./pages/Approvals'))
 const Companies = lazy(() => import('./pages/Companies'))
 const CompanyOnboarding = lazy(() => import('./pages/CompanyOnboarding'))
 const CompanyAdmins = lazy(() => import('./pages/CompanyAdmins'))
@@ -14,6 +15,10 @@ const Configuration = lazy(() => import('./pages/Configuration'))
 const Subscriptions = lazy(() => import('./pages/Subscriptions'))
 const Wallets = lazy(() => import('./pages/Wallets'))
 const AuditLogs = lazy(() => import('./pages/AuditLogs'))
+
+const MAKER = ['maker', 'super_admin', 'admin']
+const CHECKER = ['checker', 'super_admin', 'admin']
+const ADMIN = ['super_admin', 'admin']
 
 function PageFallback() {
   return (
@@ -35,15 +40,23 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          {/* Role-aware dashboard + shared approvals workspace */}
           <Route path="/" element={<Dashboard />} />
-          <Route path="/companies" element={<Companies />} />
-          <Route path="/company-onboarding" element={<CompanyOnboarding />} />
-          <Route path="/company-onboarding/:draftId" element={<CompanyOnboarding />} />
-          <Route path="/company-admins" element={<CompanyAdmins />} />
-          <Route path="/configuration" element={<Configuration />} />
-          <Route path="/subscriptions" element={<Subscriptions />} />
-          <Route path="/wallets" element={<Wallets />} />
-          <Route path="/audit-logs" element={<AuditLogs />} />
+          <Route path="/approvals" element={<Approvals />} />
+
+          {/* Maker */}
+          <Route path="/company-onboarding" element={<RoleRoute roles={MAKER}><CompanyOnboarding /></RoleRoute>} />
+          <Route path="/company-onboarding/:draftId" element={<RoleRoute roles={MAKER}><CompanyOnboarding /></RoleRoute>} />
+
+          {/* Checker + Super Admin can browse companies */}
+          <Route path="/companies" element={<RoleRoute roles={CHECKER}><Companies /></RoleRoute>} />
+
+          {/* Super Admin only */}
+          <Route path="/company-admins" element={<RoleRoute roles={ADMIN}><CompanyAdmins /></RoleRoute>} />
+          <Route path="/configuration" element={<RoleRoute roles={ADMIN}><Configuration /></RoleRoute>} />
+          <Route path="/subscriptions" element={<RoleRoute roles={ADMIN}><Subscriptions /></RoleRoute>} />
+          <Route path="/wallets" element={<RoleRoute roles={ADMIN}><Wallets /></RoleRoute>} />
+          <Route path="/audit-logs" element={<RoleRoute roles={ADMIN}><AuditLogs /></RoleRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

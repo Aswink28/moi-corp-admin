@@ -1,5 +1,4 @@
 const service = require('../services/onboarding.service')
-const mailer = require('../services/mailer.service')
 const { audit } = require('../utils/audit')
 const { HttpError } = require('../middleware/error')
 
@@ -66,37 +65,29 @@ async function deleteDraft(req, res) {
   res.json({ success: true, message: 'Draft deleted' })
 }
 
-// 11. POST /companies?sendWelcomeEmail=true|false
+// 11. POST /companies — Maker submits an onboarding request for approval.
+// No provisioning / welcome email here; that happens at Super Admin activation.
 async function createCompany(req, res) {
-  const data = await service.createCompany(req.body, req.user.id)
+  const company = await service.submitCompany(req.body, req.user)
   await audit(req, {
-    action: 'onboarding.company.create',
+    action: 'onboarding.company.submit',
     entityType: 'company',
-    entityId: data.company.id,
-    details: { name: data.company.name, code: data.company.code },
+    entityId: company.id,
+    details: { name: company.name, code: company.code, status: company.status },
   })
+  res.status(201).json({ success: true, data: { company } })
+}
 
-  let email = null
-  if (req.query.sendWelcomeEmail !== 'false') {
-    const loginUrl = process.env.COMPANY_APP_URL || ''
-    try {
-      const result = await mailer.sendWelcomeEmail({
-        to: data.admin.email,
-        name: data.admin.name,
-        companyName: data.company.name,
-        username: data.admin.username,
-        tempPassword: data.admin.temp_password,
-        loginUrl,
-      })
-      email = result
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[onboarding] welcome email failed:', err.message)
-      email = { delivered: false, transport: 'console' }
-    }
-  }
-
-  res.status(201).json({ success: true, data: { ...data, email, emailDelivered: email ? email.delivered : false } })
+// 11b. PUT /companies/:id/resubmit — Maker resubmits after requested changes.
+async function resubmitCompany(req, res) {
+  const company = await service.resubmitCompany(req.params.id, req.body, req.user)
+  await audit(req, {
+    action: 'onboarding.company.resubmit',
+    entityType: 'company',
+    entityId: company.id,
+    details: { name: company.name, code: company.code },
+  })
+  res.json({ success: true, data: { company } })
 }
 
 // 12. GET /invoices/:id
@@ -123,6 +114,7 @@ module.exports = {
   updateDraft,
   deleteDraft,
   createCompany,
+  resubmitCompany,
   getInvoice,
   getInvoiceHtml,
 }

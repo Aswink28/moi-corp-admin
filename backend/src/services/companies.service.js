@@ -5,6 +5,9 @@ const SELECT_LIST = `
   SELECT c.*,
          w.balance AS wallet_balance,
          w.currency AS wallet_currency,
+         mk.name AS maker_name, mk.email AS maker_email,
+         ck.name AS checker_name, ck.email AS checker_email,
+         sa.name AS approver_name, sa.email AS approver_email,
          (SELECT COUNT(*)::int FROM company_admins ca WHERE ca.company_id = c.id) AS admin_count,
          (SELECT row_to_json(s) FROM (
             SELECT plan, status, end_date FROM company_subscriptions sub
@@ -12,6 +15,9 @@ const SELECT_LIST = `
          ) s) AS subscription
     FROM companies c
     LEFT JOIN company_wallets w ON w.company_id = c.id
+    LEFT JOIN super_admins mk ON mk.id = c.submitted_by
+    LEFT JOIN super_admins ck ON ck.id = c.reviewed_by
+    LEFT JOIN super_admins sa ON sa.id = c.approved_by
 `
 
 async function list({ search = '', status = '' } = {}) {
@@ -82,8 +88,14 @@ async function update(id, data) {
   return rows[0]
 }
 
+const COMPANY_STATUSES = [
+  'draft', 'submitted', 'under_checker_review', 'changes_requested',
+  'checker_approved', 'pending_super_admin_approval',
+  'active', 'rejected', 'suspended', 'inactive',
+]
+
 async function setStatus(id, status) {
-  if (!['active', 'suspended', 'inactive'].includes(status)) throw new HttpError(400, 'Invalid status')
+  if (!COMPANY_STATUSES.includes(status)) throw new HttpError(400, 'Invalid status')
   const { rows } = await pool.query(
     `UPDATE companies SET status = $1, updated_at = now() WHERE id = $2 RETURNING *`,
     [status, id]

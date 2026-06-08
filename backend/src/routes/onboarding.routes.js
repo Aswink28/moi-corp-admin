@@ -2,8 +2,12 @@ const express = require('express')
 const ctrl = require('../controllers/onboarding.controller')
 const h = require('../utils/asyncHandler')
 const { upload } = require('../middleware/upload')
+const { authorize } = require('../middleware/auth')
 
 const router = express.Router()
+
+// Makers create & submit onboarding requests (super admin may also do so).
+const MAKER = authorize('maker', 'super_admin', 'admin')
 
 router.get('/meta', h(ctrl.meta))
 router.get('/generate-code', h(ctrl.generateCode))
@@ -17,7 +21,8 @@ router.get('/drafts/:id', h(ctrl.getDraft))
 router.put('/drafts/:id', h(ctrl.updateDraft))
 router.delete('/drafts/:id', h(ctrl.deleteDraft))
 
-router.post('/companies', h(ctrl.createCompany))
+router.post('/companies', MAKER, h(ctrl.createCompany))
+router.put('/companies/:id/resubmit', MAKER, h(ctrl.resubmitCompany))
 
 router.get('/invoices/:id', h(ctrl.getInvoice))
 router.get('/invoices/:id/html', h(ctrl.getInvoiceHtml))

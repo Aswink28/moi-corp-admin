@@ -33,6 +33,29 @@ const config = {
     email: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@company-admin.local',
     password: process.env.SEED_SUPERADMIN_PASSWORD || 'Admin@12345',
   },
+
+  // Demo accounts for the 3-level approval workflow. Passwords are overridable
+  // via env; defaults are fine for local/dev. Each is printed by `npm run seed`.
+  seedUsers: [
+    {
+      name: process.env.SEED_SUPERADMIN_NAME || 'Super Admin',
+      email: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@company-admin.local',
+      password: process.env.SEED_SUPERADMIN_PASSWORD || 'Admin@12345',
+      role: 'super_admin',
+    },
+    {
+      name: process.env.SEED_MAKER_NAME || 'Maker User',
+      email: process.env.SEED_MAKER_EMAIL || 'maker@company-admin.local',
+      password: process.env.SEED_MAKER_PASSWORD || 'Maker@12345',
+      role: 'maker',
+    },
+    {
+      name: process.env.SEED_CHECKER_NAME || 'Checker User',
+      email: process.env.SEED_CHECKER_EMAIL || 'checker@company-admin.local',
+      password: process.env.SEED_CHECKER_PASSWORD || 'Checker@12345',
+      role: 'checker',
+    },
+  ],
 }
 
 module.exports = config

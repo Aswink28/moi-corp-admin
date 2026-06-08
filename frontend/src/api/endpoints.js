@@ -42,6 +42,30 @@ export const auditApi = {
   list: (params) => api.get('/audit-logs', { params }).then((r) => r.data.data),
 }
 
+// 3-level approval workflow (Maker → Checker → Super Admin).
+export const approvalsApi = {
+  // Role-scoped queue (maker: own records; checker/super admin: their stage). all=true → super admin sees everything.
+  queue: (all = false) =>
+    api.get('/approvals/queue', { params: all ? { all: 'true' } : {} }).then((r) => r.data.data),
+  get: (id) => api.get(`/approvals/${id}`).then((r) => r.data.data),
+  history: (id) => api.get(`/approvals/${id}/history`).then((r) => r.data.data),
+
+  // Checker
+  startReview: (id) => api.post(`/approvals/${id}/start-review`).then((r) => r.data.data),
+  checkerApprove: (id, notes) => api.post(`/approvals/${id}/checker-approve`, { notes }).then((r) => r.data.data),
+  requestChanges: (id, notes) => api.post(`/approvals/${id}/request-changes`, { notes }).then((r) => r.data.data),
+  checkerReject: (id, notes) => api.post(`/approvals/${id}/checker-reject`, { notes }).then((r) => r.data.data),
+
+  // Super Admin
+  activate: (id, sendEmail = false) =>
+    api
+      .post(`/approvals/${id}/activate`, {}, { params: { sendWelcomeEmail: sendEmail ? 'true' : 'false' } })
+      .then((r) => r.data.data),
+  reject: (id, notes) => api.post(`/approvals/${id}/reject`, { notes }).then((r) => r.data.data),
+  suspend: (id, notes) => api.post(`/approvals/${id}/suspend`, { notes }).then((r) => r.data.data),
+  reactivate: (id, notes) => api.post(`/approvals/${id}/reactivate`, { notes }).then((r) => r.data.data),
+}
+
 export const onboardingApi = {
   // GET /meta
   meta: () => api.get('/onboarding/meta').then((r) => r.data.data),
@@ -78,11 +102,13 @@ export const onboardingApi = {
     ).then((r) => r.data.data),
   deleteDraft: (id) => api.delete(`/onboarding/drafts/${id}`).then((r) => r.data),
 
-  // POST /companies?sendWelcomeEmail=
-  createCompany: (body, sendEmail = true) =>
-    api
-      .post('/onboarding/companies', body, { params: { sendWelcomeEmail: sendEmail ? 'true' : 'false' } })
-      .then((r) => r.data.data),
+  // POST /companies — Maker submits an onboarding request for approval.
+  // Returns { company }. Provisioning happens later, at Super Admin activation.
+  createCompany: (body) => api.post('/onboarding/companies', body).then((r) => r.data.data),
+  submitCompany: (body) => api.post('/onboarding/companies', body).then((r) => r.data.data),
+
+  // PUT /companies/:id/resubmit — Maker resubmits after requested changes.
+  resubmitCompany: (id, body) => api.put(`/onboarding/companies/${id}/resubmit`, body).then((r) => r.data.data),
 
   // Invoices
   getInvoiceHtmlUrl: (id) => {

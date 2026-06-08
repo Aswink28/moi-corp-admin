@@ -14,3 +14,18 @@ export default function ProtectedRoute({ children }) {
   if (!user) return <Navigate to="/login" replace />
   return children
 }
+
+/** Guard that also enforces an allowed-roles list; bounces unauthorized users home. */
+export function RoleRoute({ roles, children }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+  if (!user) return <Navigate to="/login" replace />
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />
+  return children
+}

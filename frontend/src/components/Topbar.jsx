@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 import { useColorMode } from '../context/ColorModeContext'
 import { useAuth } from '../context/AuthContext'
 import { findNav } from './navConfig'
+import { roleLabel } from '../constants/workflow'
 
 export default function Topbar({ onMenuClick }) {
   const { mode, toggle } = useColorMode()
@@ -71,7 +72,7 @@ export default function Topbar({ onMenuClick }) {
           <Divider />
           <MenuItem disabled>
             <ListItemIcon><PersonRoundedIcon fontSize="small" /></ListItemIcon>
-            {user?.role}
+            {roleLabel(user?.role)}
           </MenuItem>
           <Divider />
           <MenuItem onClick={() => { setAnchor(null); logout() }}>

@@ -6,26 +6,30 @@ import { alpha } from '@mui/material/styles'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
-import BlockRoundedIcon from '@mui/icons-material/BlockRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import { PageHeader, DataTable, FormDialog, ConfirmDialog, StatusBadge } from '../components/ui'
+import CompanyWorkflowDialog from '../components/CompanyWorkflowDialog'
 import { companiesApi } from '../api/endpoints'
-import { fmtMoney } from '../utils/format'
+import { fmtMoney, fmtDate } from '../utils/format'
 import { errMsg } from '../api/client'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
 
 const EMPTY = { name: '', code: '', legal_name: '', industry: '', email: '', phone: '', city: '', country: 'India', address: '' }
 const INDUSTRIES = ['IT Services', 'Consulting', 'Manufacturing', 'Finance', 'Healthcare', 'Other']
 
 export default function Companies() {
   const { notify } = useToast()
+  const { user } = useAuth()
+  const isSuper = user?.role === 'super_admin' || user?.role === 'admin'
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [dialog, setDialog] = useState(null) // {mode, data}
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [workflowId, setWorkflowId] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -54,16 +58,6 @@ export default function Companies() {
       notify(errMsg(e), 'error')
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function setStatus(id, status) {
-    try {
-      await companiesApi.setStatus(id, status)
-      notify(`Company ${status}`, status === 'active' ? 'success' : 'warning')
-      load()
-    } catch (e) {
-      notify(errMsg(e), 'error')
     }
   }
 
@@ -97,22 +91,22 @@ export default function Companies() {
       ),
     },
     { key: 'code', header: 'Code', render: (r) => <StatusBadge status="info" label={r.code} /> },
-    { key: 'industry', header: 'Industry', render: (r) => r.industry || '—' },
-    { key: 'admin_count', header: 'Admins', align: 'center', value: (r) => r.admin_count },
+    { key: 'maker_name', header: 'Submitted By', render: (r) => r.maker_name || '—' },
+    { key: 'approver_name', header: 'Approved By', render: (r) => r.approver_name || '—' },
     { key: 'wallet_balance', header: 'Wallet', value: (r) => Number(r.wallet_balance || 0), render: (r) => fmtMoney(r.wallet_balance, r.wallet_currency) },
-    { key: 'subscription', header: 'Plan', sortable: false, render: (r) => (r.subscription ? <StatusBadge status={r.subscription.plan} /> : '—') },
+    { key: 'updated_at', header: 'Updated', value: (r) => r.updated_at || '', render: (r) => fmtDate(r.updated_at) },
     { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
     {
       key: 'actions', header: '', align: 'right', sortable: false, exportable: false,
       render: (r) => (
         <Box sx={{ whiteSpace: 'nowrap' }}>
-          <Tooltip title="Edit"><IconButton size="small" onClick={() => setDialog({ mode: 'edit', data: { ...EMPTY, ...r } })}><EditRoundedIcon fontSize="small" /></IconButton></Tooltip>
-          {r.status !== 'active' ? (
-            <Tooltip title="Activate"><IconButton size="small" color="success" onClick={() => setStatus(r.id, 'active')}><CheckCircleRoundedIcon fontSize="small" /></IconButton></Tooltip>
-          ) : (
-            <Tooltip title="Suspend"><IconButton size="small" color="warning" onClick={() => setStatus(r.id, 'suspended')}><BlockRoundedIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="Workflow & history"><IconButton size="small" color="primary" onClick={() => setWorkflowId(r.id)}><AccountTreeRoundedIcon fontSize="small" /></IconButton></Tooltip>
+          {isSuper && (
+            <Tooltip title="Edit"><IconButton size="small" onClick={() => setDialog({ mode: 'edit', data: { ...EMPTY, ...r } })}><EditRoundedIcon fontSize="small" /></IconButton></Tooltip>
           )}
-          <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setConfirm({ id: r.id, name: r.name })}><DeleteRoundedIcon fontSize="small" /></IconButton></Tooltip>
+          {isSuper && (
+            <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setConfirm({ id: r.id, name: r.name })}><DeleteRoundedIcon fontSize="small" /></IconButton></Tooltip>
+          )}
         </Box>
       ),
     },
@@ -122,8 +116,8 @@ export default function Companies() {
     <Box>
       <PageHeader
         title="Companies"
-        subtitle="Onboard and manage your client companies"
-        actions={<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button>}
+        subtitle="Browse client companies and their approval workflow"
+        actions={isSuper ? <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button> : null}
       />
 
       <DataTable
@@ -135,8 +129,8 @@ export default function Companies() {
         empty={{
           icon: <BusinessRoundedIcon sx={{ fontSize: 42 }} />,
           title: 'No companies onboarded yet',
-          description: 'Create your first client company to start managing admins, modules, billing and wallets.',
-          action: <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button>,
+          description: 'Companies appear here once a Maker submits an onboarding request.',
+          action: isSuper ? <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button> : null,
         }}
       />
 
@@ -175,6 +169,14 @@ export default function Companies() {
         loading={deleting}
         onConfirm={remove}
         onClose={() => setConfirm(null)}
+      />
+
+      <CompanyWorkflowDialog
+        open={!!workflowId}
+        companyId={workflowId}
+        role={user?.role}
+        onClose={() => setWorkflowId(null)}
+        onChanged={load}
       />
     </Box>
   )

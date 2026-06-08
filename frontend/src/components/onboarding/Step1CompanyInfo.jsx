@@ -115,7 +115,16 @@ export default function Step1CompanyInfo({ data, setField, errors, meta }) {
         Basic identity and statutory details for the company you are onboarding.
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          // Medium-sized field labels/placeholders and input text (the default
+          // rendered a touch large for this form).
+          '& .MuiInputBase-input': { fontSize: '0.9rem' },
+          '& .MuiInputLabel-root': { fontSize: '0.9rem' },
+        }}
+      >
         <Grid item xs={12} sm={6}>
           <TextField
             label="Company Name" required fullWidth

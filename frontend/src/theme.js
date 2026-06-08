@@ -14,7 +14,7 @@ export const brand = {
 const common = {
   shape: { borderRadius: 12 },
   typography: {
-    fontFamily: 'Inter, system-ui, Roboto, Arial, sans-serif',
+    fontFamily: "'Inter', sans-serif",
     h4: { fontWeight: 800, letterSpacing: '-0.02em' },
     h5: { fontWeight: 800, letterSpacing: '-0.02em' },
     h6: { fontWeight: 700, letterSpacing: '-0.01em' },

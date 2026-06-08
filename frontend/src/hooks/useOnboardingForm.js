@@ -257,6 +257,10 @@ export function useOnboardingForm({ draftId: initialDraftId } = {}) {
   const [meta, setMeta] = useState(null)
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(0)
+  // Dot-paths the user has interacted with. We only surface a field's validation
+  // error once it has been touched, so required-field errors don't render in red
+  // on first paint (before the user has typed anything).
+  const [touched, setTouched] = useState({})
   const [maxVisited, setMaxVisited] = useState(0)
   const [draftId, setDraftId] = useState(initialDraftId || null)
   const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved'
@@ -316,13 +320,24 @@ export function useOnboardingForm({ draftId: initialDraftId } = {}) {
   const setField = useCallback(
     (path, value) => {
       setData((prev) => setIn(prev, path, value))
+      setTouched((t) => (t[path] ? t : { ...t, [path]: true }))
       scheduleSave()
     },
     [scheduleSave]
   )
 
-  // Per-step errors (live) for the current step.
-  const errors = useMemo(() => validateStep(step, data), [step, data])
+  // Per-step errors (live) for the current step, but only surfaced for fields the
+  // user has already touched — keeps the form from showing red required-field
+  // errors before any interaction. Navigation gating (isStepValid) still uses the
+  // full, unfiltered validation below.
+  const errors = useMemo(() => {
+    const all = validateStep(step, data)
+    const visible = {}
+    for (const key of Object.keys(all)) {
+      if (touched[key]) visible[key] = all[key]
+    }
+    return visible
+  }, [step, data, touched])
 
   const isStepValid = useCallback(
     (i = stepRef.current) => Object.keys(validateStep(i, dataRef.current)).length === 0,

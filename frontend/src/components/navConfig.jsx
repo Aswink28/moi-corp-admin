@@ -7,11 +7,13 @@ import CardMembershipRoundedIcon from '@mui/icons-material/CardMembershipRounded
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
 
 // Canonical nav items. Each maps to a route in App.jsx.
 const ITEMS = {
   dashboard: { to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> },
   approvals: { to: '/approvals', label: 'Approvals', icon: <FactCheckRoundedIcon /> },
+  analytics: { to: '/company-analytics', label: 'Company Analytics', icon: <InsightsRoundedIcon /> },
   onboard: { to: '/company-onboarding', label: 'Onboard Company', icon: <AddBusinessRoundedIcon /> },
   companies: { to: '/companies', label: 'Companies', icon: <BusinessRoundedIcon /> },
   admins: { to: '/company-admins', label: 'Company Admins', icon: <AdminPanelSettingsRoundedIcon /> },
@@ -37,7 +39,7 @@ export function navGroupsFor(role) {
   }
   // super_admin / admin
   return [
-    { heading: 'Overview', items: [ITEMS.dashboard] },
+    { heading: 'Overview', items: [ITEMS.dashboard, ITEMS.analytics] },
     { heading: 'Approvals', items: [{ ...ITEMS.approvals, label: 'Final Approvals' }] },
     { heading: 'Management', items: [ITEMS.companies, ITEMS.onboard, ITEMS.admins, ITEMS.configuration] },
     { heading: 'Billing', items: [ITEMS.subscriptions, ITEMS.wallets] },

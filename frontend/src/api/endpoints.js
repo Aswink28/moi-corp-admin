@@ -42,6 +42,11 @@ export const auditApi = {
   list: (params) => api.get('/audit-logs', { params }).then((r) => r.data.data),
 }
 
+// Company Analytics (Super Admin 360° dashboard).
+export const analyticsApi = {
+  company: (id) => api.get(`/analytics/company/${id}`).then((r) => r.data.data),
+}
+
 // 3-level approval workflow (Maker → Checker → Super Admin).
 export const approvalsApi = {
   // Role-scoped queue (maker: own records; checker/super admin: their stage). all=true → super admin sees everything.

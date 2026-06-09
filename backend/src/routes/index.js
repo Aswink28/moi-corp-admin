@@ -11,6 +11,7 @@ const wallets = require('./wallets.routes')
 const auditLogs = require('./auditLogs.routes')
 const onboarding = require('./onboarding.routes')
 const approvals = require('./approvals.routes')
+const analytics = require('./analytics.routes')
 
 const router = express.Router()
 
@@ -28,5 +29,6 @@ router.use('/wallets', wallets)
 router.use('/audit-logs', auditLogs)
 router.use('/onboarding', onboarding)
 router.use('/approvals', approvals)
+router.use('/analytics', analytics)
 
 module.exports = router

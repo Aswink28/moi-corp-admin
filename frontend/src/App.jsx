@@ -8,6 +8,7 @@ import Login from './pages/Login'
 // Code-split the authenticated pages.
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Approvals = lazy(() => import('./pages/Approvals'))
+const CompanyAnalytics = lazy(() => import('./pages/CompanyAnalytics'))
 const Companies = lazy(() => import('./pages/Companies'))
 const CompanyOnboarding = lazy(() => import('./pages/CompanyOnboarding'))
 const CompanyAdmins = lazy(() => import('./pages/CompanyAdmins'))
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/companies" element={<RoleRoute roles={CHECKER}><Companies /></RoleRoute>} />
 
           {/* Super Admin only */}
+          <Route path="/company-analytics" element={<RoleRoute roles={ADMIN}><CompanyAnalytics /></RoleRoute>} />
           <Route path="/company-admins" element={<RoleRoute roles={ADMIN}><CompanyAdmins /></RoleRoute>} />
           <Route path="/configuration" element={<RoleRoute roles={ADMIN}><Configuration /></RoleRoute>} />
           <Route path="/subscriptions" element={<RoleRoute roles={ADMIN}><Subscriptions /></RoleRoute>} />

@@ -29,6 +29,17 @@ function componentsFor(mode, palette) {
     MuiCssBaseline: {
       styleOverrides: {
         body: { backgroundColor: palette.background.default },
+        // Kill Chrome/Edge's autofill background (the sky-blue/yellow fill that
+        // ignores the theme). The inset box-shadow repaints the field, and the
+        // long transition keeps it from flashing back on focus.
+        'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active, textarea:-webkit-autofill, select:-webkit-autofill': {
+          WebkitTextFillColor: palette.text.primary,
+          WebkitBoxShadow: `0 0 0 1000px ${palette.background.default} inset`,
+          boxShadow: `0 0 0 1000px ${palette.background.default} inset`,
+          caretColor: palette.text.primary,
+          borderRadius: 'inherit',
+          transition: 'background-color 600000s 0s, color 600000s 0s',
+        },
       },
     },
     MuiButton: {

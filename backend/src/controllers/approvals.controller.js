@@ -43,8 +43,36 @@ const checkerReject = action((id, user, n) => approvals.checkerReject(id, user, 
 
 // ── Super Admin actions ──────────────────────────────────────────────────────
 const reject = action((id, user, n) => approvals.superReject(id, user, n), 'company.reject')
-const suspend = action((id, user, n) => approvals.suspend(id, user, n), 'company.suspend')
-const reactivate = action((id, user, n) => approvals.reactivate(id, user, n), 'company.reactivate')
+
+// Suspend / reactivate also mirror the new status into Moi-Corp Product so the
+// tenant's users are locked out / restored there (best-effort; never blocks).
+function lifecycle(serviceFn, auditAction, productStatus) {
+  return async (req, res) => {
+    const company = await serviceFn(req.params.id, req.user, req.body.notes)
+    await audit(req, {
+      action: auditAction,
+      entityType: 'company',
+      entityId: company.id,
+      details: { status: company.status, notes: req.body.notes || null },
+    })
+    const product = await onboarding.syncCompanyStatusToProduct(company.id, productStatus)
+    res.json({ success: true, data: { ...company, product_sync: product } })
+  }
+}
+const suspend = lifecycle((id, user, n) => approvals.suspend(id, user, n), 'company.suspend', 'suspended')
+const reactivate = lifecycle((id, user, n) => approvals.reactivate(id, user, n), 'company.reactivate', 'active')
+
+// POST /approvals/:id/reprovision  (Super Admin) — retry Product provisioning.
+async function reprovision(req, res) {
+  const data = await onboarding.reprovisionCompany(req.params.id, req.user)
+  await audit(req, {
+    action: 'company.reprovision',
+    entityType: 'company',
+    entityId: req.params.id,
+    details: { product_provisioning: data.product_provisioning },
+  })
+  res.json({ success: true, data })
+}
 
 // POST /approvals/:id/activate?sendWelcomeEmail=true|false  (Super Admin)
 async function activate(req, res) {
@@ -91,4 +119,5 @@ module.exports = {
   suspend,
   reactivate,
   activate,
+  reprovision,
 }

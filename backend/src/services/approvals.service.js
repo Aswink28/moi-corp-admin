@@ -23,6 +23,7 @@ const SUPER_ADMIN_QUEUE = ['checker_approved', 'pending_super_admin_approval']
 const WORKFLOW_SELECT = `
   SELECT c.id, c.name, c.code, c.status, c.industry, c.email, c.review_notes,
          c.created_by, c.submitted_by, c.reviewed_by, c.approved_by, c.provisioned,
+         c.product_provisioned, c.product_provisioned_at, c.product_provision_error, c.product_company_id,
          c.submitted_at, c.reviewed_at, c.approved_at, c.created_at, c.updated_at,
          mk.name AS maker_name,    mk.email AS maker_email,
          ck.name AS checker_name,  ck.email AS checker_email,

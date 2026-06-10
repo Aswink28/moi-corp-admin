@@ -69,6 +69,9 @@ export const approvalsApi = {
   reject: (id, notes) => api.post(`/approvals/${id}/reject`, { notes }).then((r) => r.data.data),
   suspend: (id, notes) => api.post(`/approvals/${id}/suspend`, { notes }).then((r) => r.data.data),
   reactivate: (id, notes) => api.post(`/approvals/${id}/reactivate`, { notes }).then((r) => r.data.data),
+
+  // Retry Moi-Corp Product provisioning after a failure (Super Admin).
+  reprovision: (id) => api.post(`/approvals/${id}/reprovision`).then((r) => r.data.data),
 }
 
 export const onboardingApi = {

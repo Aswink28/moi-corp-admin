@@ -24,5 +24,6 @@ router.post('/:id/activate', SUPER, h(ctrl.activate))
 router.post('/:id/reject', SUPER, h(ctrl.reject))
 router.post('/:id/suspend', SUPER, h(ctrl.suspend))
 router.post('/:id/reactivate', SUPER, h(ctrl.reactivate))
+router.post('/:id/reprovision', SUPER, h(ctrl.reprovision))  // retry Product provisioning
 
 module.exports = router

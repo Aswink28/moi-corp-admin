@@ -346,6 +346,15 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS reviewed_at   TIMESTAMPTZ;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS approved_at   TIMESTAMPTZ;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS review_notes  TEXT;
 
+-- ── Moi-Corp Product provisioning tracking (multi-tenancy integration) ───────
+-- Records the outcome of auto-provisioning the company + Company Admin into the
+-- Product (TravelDesk) DB at activation, for monitoring + retry.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS product_provisioned     BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS product_provisioned_at  TIMESTAMPTZ;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS product_provision_error TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS product_company_id      UUID;  -- == companies.id, mirrored in Product
+ALTER TABLE company_admins ADD COLUMN IF NOT EXISTS product_user_id     UUID;  -- the admin's users.id in Product
+
 -- ── company_approval_history: full append-only approval/audit trail ──────────
 CREATE TABLE IF NOT EXISTS company_approval_history (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

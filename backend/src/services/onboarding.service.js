@@ -4,6 +4,7 @@ const password = require('../utils/password')
 const validators = require('../utils/validators')
 const codegen = require('../utils/codegen')
 const invoiceService = require('./invoice.service')
+const productProvisioning = require('./productProvisioning.service')
 const { recordHistory } = require('../utils/approvalHistory')
 
 // ── Reference data (mirrors §D.3 of the onboarding contract) ────────────────
@@ -544,6 +545,94 @@ async function provisionChildren(client, companyRow, payload, actorId) {
 }
 
 /**
+ * Push a company + its Company Admin into Moi-Corp Product and record the outcome
+ * on the Admin side. Best-effort: a Product outage is logged + stored, never thrown.
+ * Idempotent on the Product side, so it doubles as the re-provision path.
+ *
+ * @param {object} companyRow  the Admin companies row (id, name, code, status)
+ * @param {object} adminRow    the company_admins row (id, name, email, phone, …)
+ * @param {string} tempPassword plaintext temp password (only sent when known)
+ * @param {Array}  moduleRows  company_modules rows ({ module_key, enabled })
+ * @returns {{ ok:boolean, product_user_id?:string, error?:string }}
+ */
+async function pushToProduct(companyRow, adminRow, tempPassword, moduleRows) {
+  try {
+    const r = await productProvisioning.provisionToProduct({
+      company: { id: companyRow.id, name: companyRow.name, code: companyRow.code, status: companyRow.status || 'active' },
+      admin: adminRow,
+      tempPassword,
+      modules: productProvisioning.modulesFromOnboarding(moduleRows),
+    })
+    await pool.query(
+      `UPDATE companies SET product_provisioned = TRUE, product_provisioned_at = now(),
+              product_provision_error = NULL, product_company_id = $1, updated_at = now()
+        WHERE id = $2`,
+      [r.company_id, companyRow.id]
+    )
+    if (adminRow && adminRow.id) {
+      await pool.query(`UPDATE company_admins SET product_user_id = $1 WHERE id = $2`, [r.user_id, adminRow.id])
+    }
+    return { ok: true, product_user_id: r.user_id, product_company_id: r.company_id }
+  } catch (e) {
+    console.error(`[provisioning] Product provisioning failed for company ${companyRow.id}: ${e.message}`)
+    await pool
+      .query(
+        `UPDATE companies SET product_provisioned = FALSE, product_provision_error = $1, updated_at = now() WHERE id = $2`,
+        [e.message, companyRow.id]
+      )
+      .catch(() => {})
+    return { ok: false, error: e.message }
+  }
+}
+
+/**
+ * Re-provision an already-activated company into Product (Super Admin retry after
+ * a provisioning failure). Reconstructs the admin payload from the stored
+ * onboarding_payload; the temp password is unknown on retry, so an existing
+ * Product admin keeps its current password (the upsert preserves it) — a fresh
+ * password can be pushed separately via the reset-password flow.
+ */
+async function reprovisionCompany(companyId, _user) {
+  const { rows } = await pool.query('SELECT * FROM companies WHERE id = $1', [companyId])
+  if (!rows.length) throw new HttpError(404, 'Company not found')
+  const companyRow = rows[0]
+  if (!companyRow.provisioned) {
+    throw new HttpError(409, 'Company has not been activated yet — activate it first.')
+  }
+  const { rows: admins } = await pool.query(
+    `SELECT id, name, email, phone, employee_id, username FROM company_admins
+      WHERE company_id = $1 ORDER BY created_at ASC LIMIT 1`,
+    [companyId]
+  )
+  if (!admins.length) throw new HttpError(409, 'No Company Admin found for this company')
+  const { rows: modules } = await pool.query(
+    `SELECT module_key, enabled FROM company_modules WHERE company_id = $1`,
+    [companyId]
+  )
+  const product = await pushToProduct(companyRow, admins[0], undefined, modules)
+  return { company_id: companyId, product_provisioning: product }
+}
+
+/**
+ * Sync a company's lifecycle status into Product (suspend / reactivate / deactivate).
+ * Best-effort + logged. No-op if the company was never provisioned into Product.
+ */
+async function syncCompanyStatusToProduct(companyId, status) {
+  const { rows } = await pool.query(
+    'SELECT product_company_id, product_provisioned FROM companies WHERE id = $1',
+    [companyId]
+  )
+  if (!rows.length || !rows[0].product_provisioned || !rows[0].product_company_id) return { ok: false, skipped: true }
+  try {
+    await productProvisioning.syncStatus(rows[0].product_company_id, status)
+    return { ok: true }
+  } catch (e) {
+    console.error(`[provisioning] Product status sync (${status}) failed for company ${companyId}: ${e.message}`)
+    return { ok: false, error: e.message }
+  }
+}
+
+/**
  * Super Admin final approval + activation. Reads the payload stored at submit
  * time, provisions everything, generates/locks the company code, flips status to
  * 'active' and records the approval-history entry — all in one transaction.
@@ -602,8 +691,12 @@ async function activateCompany(companyId, user, { sendWelcomeEmail } = {}) {
     return { company: updated[0], ...provisioned }
   })
 
+  // ── Auto-provision into Moi-Corp Product (best-effort, never blocks activation) ──
+  const product = await pushToProduct(result.company, result.admin, result.tempPassword, result.modules)
+
   return {
     company: result.company,
+    product_provisioning: product,
     contact: result.contact,
     admin: {
       id: result.admin.id,
@@ -677,6 +770,8 @@ module.exports = {
   submitCompany,
   resubmitCompany,
   activateCompany,
+  reprovisionCompany,
+  syncCompanyStatusToProduct,
   getInvoice,
   getInvoiceHtml,
 }

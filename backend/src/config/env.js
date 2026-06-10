@@ -28,6 +28,13 @@ const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 
+  // Moi-Corp Product (TravelDesk) integration — auto-provision companies + admins
+  // into the Product DB via its internal provisioning API.
+  product: {
+    apiUrl: process.env.PRODUCT_API_URL || 'http://localhost:5015',
+    provisioningSecret: process.env.PRODUCT_PROVISIONING_SECRET || '',
+  },
+
   seed: {
     name: process.env.SEED_SUPERADMIN_NAME || 'Super Admin',
     email: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@company-admin.local',

@@ -142,6 +142,11 @@ export default function CompanyWorkflowDialog({ companyId, role, open, onClose, 
     if (isSuper && status === 'suspended') {
       actions.push({ key: 'reactivate', label: 'Reactivate', color: 'success', icon: <ReplayRoundedIcon />, fn: () => approvalsApi.reactivate(companyId, notes), msg: 'Company reactivated' })
     }
+    // Re-provision into Moi-Corp Product — offered once a company is active,
+    // especially useful when the automatic provisioning at activation failed.
+    if (isSuper && status === 'active' && !data.product_provisioned) {
+      actions.push({ key: 'reprovision', label: 'Re-Provision to Product', color: 'info', icon: <ReplayRoundedIcon />, fn: () => approvalsApi.reprovision(companyId), msg: 'Re-provisioned to Moi-Corp Product' })
+    }
   }
 
   // ── Build the "submitted information" sections from the stored payload ───────
@@ -158,7 +163,19 @@ export default function CompanyWorkflowDialog({ companyId, role, open, onClose, 
   const logoUrl = resolveUrl(br.logo_url || data?.logo_url)
   const hasPayload = !!data?.onboarding_payload
 
+  // Moi-Corp Product provisioning status — surfaced once the company is activated.
+  const showProvisioning = ['active', 'suspended', 'inactive'].includes(status) || data?.product_provisioned || data?.product_provision_error
+  const provisioningSection = showProvisioning ? {
+    icon: <RocketLaunchRoundedIcon />, title: 'Moi-Corp Product Provisioning', rows: [
+      { label: 'Status', value: data?.product_provisioned ? '✅ Provisioned' : (data?.product_provision_error ? '❌ Failed' : '⏳ Not provisioned') },
+      { label: 'Provisioned At', value: data?.product_provisioned_at ? new Date(data.product_provisioned_at).toLocaleString() : null },
+      { label: 'Product Company ID', value: data?.product_company_id },
+      { label: 'Last Error', value: data?.product_provision_error },
+    ],
+  } : null
+
   const sections = [
+    ...(provisioningSection ? [provisioningSection] : []),
     {
       icon: <BusinessRoundedIcon />, title: 'Company', rows: [
         { label: 'Legal Name', value: c.legal_name }, { label: 'Industry', value: c.industry },

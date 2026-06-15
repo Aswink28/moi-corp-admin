@@ -6,4 +6,6 @@ app.listen(config.port, () => {
   console.log(
     `[company-admin-backend] listening on http://localhost:${config.port} (env=${config.env}, db=${config.db.database})`
   )
+  // eslint-disable-next-line no-console
+  console.log(`[company-admin-backend] API docs at http://localhost:${config.port}/api-docs`)
 })

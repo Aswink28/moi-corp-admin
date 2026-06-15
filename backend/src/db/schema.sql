@@ -151,6 +151,33 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS pincode             VARCHAR(20);
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS timezone            VARCHAR(64) DEFAULT 'Asia/Kolkata';
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS currency            VARCHAR(8)  DEFAULT 'INR';
 
+-- ── companies: loan / underwriting profile (for the Lender Portal API) ──────
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS requested_amount  NUMERIC(16,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS interest_rate_pct NUMERIC(5,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS tenure_months     INTEGER;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS credit_rating     VARCHAR(10);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS purpose           VARCHAR(190);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS annual_revenue    NUMERIC(16,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS net_profit        NUMERIC(16,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS net_worth         NUMERIC(16,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS fiscal_year       INTEGER;
+
+-- Demo backfill: give existing companies distinct, believable loan values so the
+-- Lender Portal API returns real persisted data. Deterministic per company (via
+-- hashtext(id)) and idempotent — only fills rows that don't yet have a value, so
+-- it never overwrites real data entered later.
+UPDATE companies SET
+  requested_amount  = 1000000 + (abs(hashtext(id::text))        % 9)  * 1000000,
+  interest_rate_pct = round((9 + (abs(hashtext(id::text||'i'))  % 60) / 10.0)::numeric, 2),
+  tenure_months     = (ARRAY[12,24,36,48,60])[1 + abs(hashtext(id::text||'t')) % 5],
+  credit_rating     = (ARRAY['AAA','AA','A','BBB','BB'])[1 + abs(hashtext(id::text||'c')) % 5],
+  purpose           = (ARRAY['Working capital','Expansion','Equipment purchase','Debt refinancing','Inventory build-up'])[1 + abs(hashtext(id::text||'p')) % 5],
+  annual_revenue    = 10000000 + (abs(hashtext(id::text||'ar')) % 90) * 1000000,
+  net_profit        = 1000000  + (abs(hashtext(id::text||'np')) % 9)  * 1000000,
+  net_worth         = 5000000  + (abs(hashtext(id::text||'nw')) % 45) * 1000000,
+  fiscal_year       = 2024
+WHERE requested_amount IS NULL;
+
 -- ── company_admins: login + role + onboarding fields ───────────────────────
 ALTER TABLE company_admins ADD COLUMN IF NOT EXISTS employee_id          VARCHAR(80);
 ALTER TABLE company_admins ADD COLUMN IF NOT EXISTS username             VARCHAR(120) UNIQUE;

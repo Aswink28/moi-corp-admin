@@ -9,6 +9,10 @@ import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded'
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded'
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
+import FlightTakeoffRoundedIcon from '@mui/icons-material/FlightTakeoffRounded'
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
 import { StatCard, StatusBadge } from '../ui'
 import WorkflowLegend from './WorkflowLegend'
 import { dashboardApi } from '../../api/endpoints'
@@ -43,6 +47,30 @@ export default function SuperAdminDashboard({ user }) {
           </>
         )}
       </Grid>
+
+      {/* ── Live cross-company operational metrics from the Product system ──── */}
+      {s && (
+        <Card sx={{ p: 2.5, mt: 2.5 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Platform Activity (all companies)</Typography>
+            {s.productUnavailable
+              ? <Typography variant="caption" sx={{ color: 'warning.main', fontWeight: 600 }}>· live data unavailable</Typography>
+              : <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600 }}>· live from Product</Typography>}
+          </Stack>
+          {s.productUnavailable ? (
+            <Typography variant="body2" color="text.secondary">
+              Could not reach the Product system{s.product?.error ? ` (${s.product.error})` : ''}. These metrics will populate once it is reachable.
+            </Typography>
+          ) : (
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6} md={3}><StatCard index={0} icon={<GroupsRoundedIcon />} color="primary" label="Total Employees" value={s.product?.totalEmployees || 0} /></Grid>
+              <Grid item xs={12} sm={6} md={3}><StatCard index={1} icon={<FlightTakeoffRoundedIcon />} color="info" label="Total Bookings" value={s.product?.totalBookings || 0} /></Grid>
+              <Grid item xs={12} sm={6} md={3}><StatCard index={2} icon={<ReceiptLongRoundedIcon />} color="warning" label="Expense Claims" value={s.product?.totalExpenseClaims || 0} /></Grid>
+              <Grid item xs={12} sm={6} md={3}><StatCard index={3} icon={<AccountBalanceWalletRoundedIcon />} color="success" label="Wallet Spend" value={s.product?.walletSpent || 0} format={(n) => fmtMoney(n)} /></Grid>
+            </Grid>
+          )}
+        </Card>
+      )}
 
       <Box sx={{ mt: 2.5 }}><WorkflowLegend highlight="Super Admin" /></Box>
 

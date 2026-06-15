@@ -1,4 +1,5 @@
 const { pool } = require('../config/db')
+const productAnalytics = require('./productAnalytics.service')
 
 // Recent company records with maker/checker/approver names for dashboard lists.
 const RECENT_SELECT = `
@@ -76,6 +77,19 @@ async function superAdminStats() {
   const subscriptionsByPlan = { trial: 0, monthly: 0, quarterly: 0, yearly: 0 }
   for (const r of subs.rows) subscriptionsByPlan[r.plan] = r.count
 
+  // Live cross-company operational metrics from the Product system (real-time,
+  // aggregated across all onboarded companies). Never blocks the dashboard:
+  // if Product is unreachable the panel reports productUnavailable instead of
+  // showing fabricated numbers.
+  let product = null
+  let productUnavailable = false
+  try {
+    product = await productAnalytics.overview()
+  } catch (e) {
+    productUnavailable = true
+    product = { error: e.message }
+  }
+
   return {
     role: 'super_admin',
     companies: companies.rows[0],
@@ -89,6 +103,8 @@ async function superAdminStats() {
     admins: admins.rows[0],
     subscriptionsByPlan,
     recent: recent.rows,
+    product,            // { totalEmployees, totalBookings, totalBookingValue, totalExpenseClaims, walletSpent, pendingApprovals, bookingTrend, spendTrend }
+    productUnavailable,
   }
 }
 

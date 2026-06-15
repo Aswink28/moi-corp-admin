@@ -188,17 +188,26 @@ export default function CompanyAnalytics() {
               </Card>
             </Grid>
             <Grid item xs={12} md={5}>
-              <SectionCard title="Company Health Score" icon={<MonitorHeartRoundedIcon />} demo height>
+              <SectionCard title="Company Health Score" icon={<MonitorHeartRoundedIcon />} live height>
                 <HealthGauge score={data.health.score} band={data.health.band} factors={data.health.factors} />
               </SectionCard>
             </Grid>
           </Grid>
 
+          {/* ── Live-data unavailable banner ─────────────────────────────────── */}
+          {data.productUnavailable && (
+            <Card sx={{ p: 1.5, bgcolor: (t) => alpha(t.palette.warning.main, 0.12), border: (t) => `1px solid ${alpha(t.palette.warning.main, 0.4)}` }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                Live operational data is currently unavailable from the Product system{data.productError ? ` (${data.productError})` : ''}. Company profile, subscription, credit and invoice figures below are live; operational metrics show 0 until the Product system is reachable.
+              </Typography>
+            </Card>
+          )}
+
           {/* ── Filters ──────────────────────────────────────────────────────── */}
           <Card sx={{ p: 2 }}>
             {filters}
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Date range filters all trend charts. Department & location filter their respective views. Sample data shown until the Travel & Expense portal APIs are connected.
+              Date range filters all trend charts. Department & location filter their respective views. All figures are live from the Moi-Corp Product system, aggregated in real time.
             </Typography>
           </Card>
 
@@ -225,7 +234,7 @@ export default function CompanyAnalytics() {
           </Grid>
 
           {/* ── Employee Analytics ───────────────────────────────────────────── */}
-          <SectionCard title="Employee Analytics" icon={<GroupsRoundedIcon />} demo>
+          <SectionCard title="Employee Analytics" icon={<GroupsRoundedIcon />} live>
             <MetricRow>
               <Metric label="Total" value={data.employee.total.toLocaleString('en-IN')} />
               <Metric label="Active" value={data.employee.active.toLocaleString('en-IN')} />
@@ -238,7 +247,7 @@ export default function CompanyAnalytics() {
           </SectionCard>
 
           {/* ── Booking Analytics ────────────────────────────────────────────── */}
-          <SectionCard title="Booking Analytics" icon={<FlightTakeoffRoundedIcon />} demo>
+          <SectionCard title="Booking Analytics" icon={<FlightTakeoffRoundedIcon />} live>
             <MetricRow>
               <Metric label="Flight" value={data.booking.flight} />
               <Metric label="Hotel" value={data.booking.hotel} />
@@ -270,7 +279,7 @@ export default function CompanyAnalytics() {
           </SectionCard>
 
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block', pb: 2 }}>
-            Sections marked “Demo” use realistic sample data and will populate from the Travel & Expense portal once its APIs are connected. Company profile, subscription, credit and invoice figures are live.
+            Operational analytics are live from the Moi-Corp Product system, aggregated in real time. Company profile, subscription, credit and invoice figures come from the Admin system of record. Policy-compliance metrics are not yet tracked by the Product system.
           </Typography>
         </Stack>
       )}

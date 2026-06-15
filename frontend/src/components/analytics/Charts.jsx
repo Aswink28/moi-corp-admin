@@ -17,8 +17,8 @@ const short = (n) => {
   return String(v)
 }
 
-/** Titled card wrapper for any chart/section, with an optional "Demo data" badge. */
-export function SectionCard({ title, subtitle, icon, demo, action, height, children }) {
+/** Titled card wrapper for any chart/section, with an optional status badge. */
+export function SectionCard({ title, subtitle, icon, demo, live, action, height, children }) {
   const theme = useTheme()
   return (
     <Card sx={{ p: 2.5, height: height ? '100%' : 'auto' }}>
@@ -29,9 +29,14 @@ export function SectionCard({ title, subtitle, icon, demo, action, height, child
         </Stack>
         <Stack direction="row" spacing={1} alignItems="center">
           {action}
+          {live && (
+            <Tooltip title="Live data from the Moi-Corp Product system">
+              <Chip size="small" label="Live" sx={{ height: 22, fontWeight: 700, bgcolor: alpha(theme.palette.success.main, 0.14), color: 'success.main' }} />
+            </Tooltip>
+          )}
           {demo && (
-            <Tooltip title="Sample data — wires to the Travel & Expense portal when its APIs are connected">
-              <Chip size="small" icon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />} label="Demo" sx={{ height: 22, fontWeight: 700, bgcolor: alpha(theme.palette.warning.main, 0.14), color: 'warning.main' }} />
+            <Tooltip title="Not tracked by the Product system yet">
+              <Chip size="small" icon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />} label="N/A" sx={{ height: 22, fontWeight: 700, bgcolor: alpha(theme.palette.warning.main, 0.14), color: 'warning.main' }} />
             </Tooltip>
           )}
         </Stack>

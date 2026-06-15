@@ -9,6 +9,13 @@ const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '6010', 10),
 
+  // Set HTTPS_ENABLED=true only when the API is actually served over TLS
+  // (e.g. behind an HTTPS reverse proxy / a real cert). When false (default),
+  // HTTPS-only security headers (HSTS, CSP upgrade-insecure-requests, COOP)
+  // are turned off so the API + self-hosted Swagger UI work over plain HTTP
+  // on a LAN IP. See app.js.
+  httpsEnabled: process.env.HTTPS_ENABLED === 'true',
+
   db: {
     connectionString: process.env.DATABASE_URL || undefined,
     host: process.env.PGHOST || 'localhost',
@@ -28,11 +35,21 @@ const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 
+  // Lender Portal API — a separate external consumer of company data, secured
+  // by a shared API key (header `x-lender-api-key`), independent of the Super
+  // Admin JWT. Defaults to a dev key (override with LENDER_API_KEY in prod),
+  // matching the existing dev-default convention used for JWT_SECRET.
+  lender: {
+    apiKey: process.env.LENDER_API_KEY || 'dev-lender-key',
+  },
+
   // Moi-Corp Product (TravelDesk) integration — auto-provision companies + admins
   // into the Product DB via its internal provisioning API.
   product: {
     apiUrl: process.env.PRODUCT_API_URL || 'http://localhost:5015',
     provisioningSecret: process.env.PRODUCT_PROVISIONING_SECRET || '',
+    // Timeout for live analytics fetches from Product (ms).
+    analyticsTimeoutMs: parseInt(process.env.PRODUCT_ANALYTICS_TIMEOUT_MS || '8000', 10),
   },
 
   seed: {

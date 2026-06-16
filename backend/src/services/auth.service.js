@@ -2,6 +2,10 @@ const { pool } = require('../config/db')
 const password = require('../utils/password')
 const { sign } = require('../utils/jwt')
 const { HttpError } = require('../middleware/error')
+const { ALL_SCREENS } = require('../config/screens')
+
+// A super_admin reaches every screen; everyone else only their assigned screens.
+const screensFor = (row) => (row.role === 'super_admin' ? ALL_SCREENS : (row.screens || []))
 
 async function login(email, plainPassword) {
   if (!email || !plainPassword) throw new HttpError(400, 'Email and password are required')
@@ -18,17 +22,17 @@ async function login(email, plainPassword) {
   const token = sign({ id: user.id, email: user.email, role: user.role })
   return {
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, screens: screensFor(user) },
   }
 }
 
 async function me(userId) {
   const { rows } = await pool.query(
-    'SELECT id, name, email, role, last_login_at, created_at FROM super_admins WHERE id = $1',
+    'SELECT id, name, email, role, screens, last_login_at, created_at FROM super_admins WHERE id = $1',
     [userId]
   )
   if (!rows.length) throw new HttpError(404, 'User not found')
-  return rows[0]
+  return { ...rows[0], screens: screensFor(rows[0]) }
 }
 
 async function changePassword(userId, currentPw, newPw) {

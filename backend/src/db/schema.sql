@@ -345,6 +345,13 @@ ALTER TABLE super_admins
   ADD CONSTRAINT super_admins_role_check
   CHECK (role IN ('super_admin', 'admin', 'maker', 'checker'));
 
+-- ── User Management: profile fields + per-user screen access ─────────────────
+-- `screens` holds the Admin-Portal screen keys this user may access (a
+-- super_admin implicitly has all). Drives the sidebar + route guards.
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(20);
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS username      VARCHAR(120) UNIQUE;
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS screens       TEXT[] NOT NULL DEFAULT '{}';
+
 -- ── companies: expanded workflow status + audit columns + stored payload ─────
 -- New default is 'draft'; existing rows keep whatever status they already have.
 -- Widen status: 'pending_super_admin_approval' (28 chars) exceeds the old VARCHAR(20).
@@ -398,3 +405,31 @@ CREATE TABLE IF NOT EXISTS company_approval_history (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_approval_history_company ON company_approval_history(company_id, created_at);
+
+-- ── lender_investments: investor offers POSTed to the Lender Portal ──────────
+-- Stores both the structured offer fields and the full raw request/response
+-- JSON, so every detail is retrievable later via the Lender Portal API.
+CREATE TABLE IF NOT EXISTS lender_investments (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  external_id       VARCHAR(64) NOT NULL,        -- the id we echo back in the response
+  request_id        UUID,                        -- the offer's id from the request (echoed in the decision)
+  company_id        UUID,                        -- which company the offer targets
+  company_name      VARCHAR(190),
+  investor_id       UUID,                        -- who is offering
+  investor_email    VARCHAR(190),
+  amount            NUMERIC(16,2),               -- offered investment amount (INR)
+  interest_rate_pct NUMERIC(8,4),                -- investor's chosen rate
+  tenure_months     INTEGER,                     -- investor's chosen tenure
+  total_interest    NUMERIC(16,2),               -- computed (simple interest)
+  total_return      NUMERIC(16,2),               -- computed total return
+  submitted_at      TIMESTAMPTZ,                 -- when the investor submitted (from request)
+  schedule          JSONB,                       -- full month-by-month repayment plan
+  request_payload   JSONB NOT NULL,              -- complete raw request body, as received
+  response_payload  JSONB NOT NULL,              -- complete response body, as returned
+  status            VARCHAR(20) NOT NULL DEFAULT 'accepted',
+  received_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_lender_investments_company  ON lender_investments(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lender_investments_investor ON lender_investments(investor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lender_investments_request  ON lender_investments(request_id);

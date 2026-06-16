@@ -16,6 +16,30 @@
  *       3. DEFAULT  — a sensible default only when there is no source data.
  */
 const companiesService = require('./companies.service')
+const { pool } = require('../config/db')
+const { HttpError } = require('../middleware/error')
+
+// Valid UUID string, else null — so blank/placeholder ids don't break UUID columns.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+function uuidOrNull(v) {
+  const s = str(v)
+  return s && UUID_RE.test(s) ? s : null
+}
+
+// Numeric value if parseable, else null (for nullable NUMERIC/INTEGER columns).
+function numOrNull(v) {
+  if (v === undefined || v === null || v === '') return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
+// ISO timestamp string if valid, else null (for nullable TIMESTAMPTZ columns).
+function tsOrNull(v) {
+  const s = str(v)
+  if (!s) return null
+  const t = Date.parse(s)
+  return Number.isNaN(t) ? null : s
+}
 
 // First non-empty trimmed string among the args, else null.
 function str(...vals) {
@@ -210,4 +234,81 @@ async function getCompany(id) {
   return toLenderCompany(company)
 }
 
-module.exports = { listCompanies, getCompany, toLenderCompany }
+/**
+ * Receive one investor offer (the outbound payload we POST per offer, mirrored
+ * here so an external lender can submit/compare offers) and PERSIST it to the
+ * `lender_investments` table. Both the structured fields and the full raw
+ * request/response JSON are stored, so every detail is retrievable later via
+ * GET /lender/investments. Echoes the offer back with an accepted status and a
+ * deterministic external id derived from the offer's requestId. Any 2xx = accepted.
+ */
+async function createInvestment(offer = {}) {
+  const requestId = str(offer.requestId)
+  const externalId = `INV-${hashInt(requestId || JSON.stringify(offer))}`
+  const receivedAt = new Date().toISOString()
+
+  // The response we echo back to the caller (also persisted for the record).
+  const response = {
+    externalId,
+    requestId: requestId || null,
+    status: 'accepted',
+    receivedAt,
+  }
+
+  const { rows } = await pool.query(
+    `INSERT INTO lender_investments
+       (external_id, request_id, company_id, company_name, investor_id, investor_email,
+        amount, interest_rate_pct, tenure_months, total_interest, total_return,
+        submitted_at, schedule, request_payload, response_payload, status, received_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+     RETURNING id, created_at`,
+    [
+      externalId,
+      uuidOrNull(offer.requestId),
+      uuidOrNull(offer.companyId),
+      str(offer.companyName),
+      uuidOrNull(offer.investorId),
+      str(offer.investorEmail),
+      numOrNull(offer.amount),
+      numOrNull(offer.interestRatePct),
+      numOrNull(offer.tenureMonths),
+      numOrNull(offer.totalInterest),
+      numOrNull(offer.totalReturn),
+      tsOrNull(offer.submittedAt),
+      JSON.stringify(Array.isArray(offer.schedule) ? offer.schedule : []),
+      JSON.stringify(offer),     // full raw request
+      JSON.stringify(response),  // full response
+      response.status,
+      receivedAt,
+    ]
+  )
+
+  return { id: rows[0].id, ...response }
+}
+
+/** List stored investor offers (optional ?companyId= / ?investorId= filters). */
+async function listInvestments(filters = {}) {
+  const where = []
+  const params = []
+  const companyId = uuidOrNull(filters.companyId)
+  const investorId = uuidOrNull(filters.investorId)
+  if (companyId) { params.push(companyId); where.push(`company_id = $${params.length}`) }
+  if (investorId) { params.push(investorId); where.push(`investor_id = $${params.length}`) }
+  const sql =
+    `SELECT * FROM lender_investments
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+     ORDER BY created_at DESC`
+  const { rows } = await pool.query(sql, params)
+  return rows
+}
+
+/** Get one stored investor offer by its primary id (throws 404 if not found). */
+async function getInvestment(id) {
+  const { rows } = await pool.query('SELECT * FROM lender_investments WHERE id = $1', [id])
+  if (rows.length === 0) throw new HttpError(404, 'Investment not found')
+  return rows[0]
+}
+
+module.exports = {
+  listCompanies, getCompany, createInvestment, listInvestments, getInvestment, toLenderCompany,
+}

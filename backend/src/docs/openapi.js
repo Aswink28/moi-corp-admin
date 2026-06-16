@@ -369,6 +369,100 @@ const definition = {
           fiscal_year: 2024,
         },
       },
+      InvestmentScheduleRow: {
+        type: 'object',
+        description: 'One month of the repayment plan.',
+        properties: {
+          period: { type: 'integer', description: 'Month number (1-based)' },
+          interest: { type: 'number', description: 'Interest component for the period' },
+          principal: { type: 'number', description: 'Principal component for the period' },
+          payment: { type: 'number', description: 'Total payment for the period' },
+          balance: { type: 'number', description: 'Outstanding balance after the period' },
+        },
+      },
+      InvestmentOffer: {
+        type: 'object',
+        description:
+          'One investor offer, fired once per offer on submit so the company can compare all offers. ' +
+          'Any 2xx response means accepted (the external id is optionally echoed back).',
+        required: [
+          'requestId', 'companyId', 'companyName', 'investorId', 'investorEmail',
+          'amount', 'interestRatePct', 'tenureMonths', 'totalInterest', 'totalReturn',
+          'submittedAt', 'schedule',
+        ],
+        properties: {
+          requestId: { type: 'string', format: 'uuid', description: 'Our offer id — echoed back in the decision' },
+          companyId: { type: 'string', format: 'uuid', description: 'Which company the offer targets' },
+          companyName: { type: 'string', description: 'Target company name' },
+          investorId: { type: 'string', format: 'uuid', description: 'Who is offering' },
+          investorEmail: { type: 'string', format: 'email', description: 'Investor email' },
+          amount: { type: 'number', description: 'Offered investment amount (INR)' },
+          interestRatePct: { type: 'number', description: "Investor's chosen rate (≤ company's offered rate)" },
+          tenureMonths: { type: 'integer', description: "Investor's chosen tenure" },
+          totalInterest: { type: 'number', description: 'Computed (simple interest)' },
+          totalReturn: { type: 'number', description: 'Computed total return' },
+          submittedAt: { type: 'string', format: 'date-time', description: 'ISO-8601 submission time' },
+          schedule: {
+            type: 'array',
+            description: 'Full month-by-month repayment plan',
+            items: { $ref: '#/components/schemas/InvestmentScheduleRow' },
+          },
+        },
+        example: {
+          requestId: '',
+          companyId: '',
+          companyName: '',
+          investorId: '',
+          investorEmail: '',
+          amount: '',
+          interestRatePct: '',
+          tenureMonths: '',
+          totalInterest: '',
+          totalReturn: '',
+          submittedAt: '',
+          schedule: [
+            { period: '', interest: '', principal: '', payment: '', balance: '' },
+          ],
+        },
+      },
+      InvestmentAck: {
+        type: 'object',
+        description: 'Acknowledgement that the offer was accepted (and stored).',
+        properties: {
+          id: { type: 'string', format: 'uuid', description: 'Stored row id (lender_investments.id)' },
+          externalId: { type: 'string', example: 'INV-1837465021' },
+          requestId: { type: 'string', format: 'uuid', nullable: true },
+          status: { type: 'string', example: 'accepted' },
+          receivedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      StoredInvestment: {
+        type: 'object',
+        description:
+          'One persisted investor offer from the `lender_investments` table. Includes the structured ' +
+          'fields plus the full raw request and response payloads, so every detail is retrievable.',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          external_id: { type: 'string', example: 'INV-1837465021' },
+          request_id: { type: 'string', format: 'uuid', nullable: true },
+          company_id: { type: 'string', format: 'uuid', nullable: true },
+          company_name: { type: 'string', nullable: true },
+          investor_id: { type: 'string', format: 'uuid', nullable: true },
+          investor_email: { type: 'string', nullable: true },
+          amount: { type: 'number', nullable: true },
+          interest_rate_pct: { type: 'number', nullable: true },
+          tenure_months: { type: 'integer', nullable: true },
+          total_interest: { type: 'number', nullable: true },
+          total_return: { type: 'number', nullable: true },
+          submitted_at: { type: 'string', format: 'date-time', nullable: true },
+          schedule: { type: 'array', items: { $ref: '#/components/schemas/InvestmentScheduleRow' } },
+          request_payload: { type: 'object', additionalProperties: true, description: 'Full raw request body, as received' },
+          response_payload: { type: 'object', additionalProperties: true, description: 'Full response body, as returned' },
+          status: { type: 'string', example: 'accepted' },
+          received_at: { type: 'string', format: 'date-time' },
+          created_at: { type: 'string', format: 'date-time' },
+        },
+      },
       ApprovalActionRequest: {
         type: 'object',
         description: 'Optional note/comment attached to a workflow action.',
@@ -710,6 +804,51 @@ const definition = {
         security: [{ lenderApiKey: [] }],
         parameters: [idParam],
         responses: { 200: ok(envelope({ $ref: '#/components/schemas/LenderCompany' })), 401: ERR, 404: ERR, 503: ERR },
+      },
+    },
+    '/lender/investments': {
+      post: {
+        tags: ['Lender Portal'],
+        summary: 'Submit one investor offer to the Lender Portal',
+        description:
+          'Fired once per investor offer (on submit) so the company can compare all offers. ' +
+          'Any 2xx means accepted; the external id is echoed back.',
+        security: [{ lenderApiKey: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InvestmentOffer' } } } },
+        responses: {
+          201: ok(envelope({ $ref: '#/components/schemas/InvestmentAck' }), 'Accepted & stored'),
+          400: ERR, 401: ERR, 503: ERR,
+        },
+      },
+      get: {
+        tags: ['Lender Portal'],
+        summary: 'List stored investor offers',
+        description: 'Returns persisted offers from the lender_investments table. Optional companyId / investorId filters.',
+        security: [{ lenderApiKey: [] }],
+        parameters: [
+          { name: 'companyId', in: 'query', schema: { type: 'string', format: 'uuid' }, description: 'Filter by target company' },
+          { name: 'investorId', in: 'query', schema: { type: 'string', format: 'uuid' }, description: 'Filter by investor' },
+        ],
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              count: { type: 'integer', example: 1 },
+              data: { type: 'array', items: { $ref: '#/components/schemas/StoredInvestment' } },
+            },
+          }),
+          401: ERR, 503: ERR,
+        },
+      },
+    },
+    '/lender/investments/{id}': {
+      get: {
+        tags: ['Lender Portal'],
+        summary: 'Get one stored investor offer',
+        security: [{ lenderApiKey: [] }],
+        parameters: [idParam],
+        responses: { 200: ok(envelope({ $ref: '#/components/schemas/StoredInvestment' })), 401: ERR, 404: ERR, 503: ERR },
       },
     },
   },

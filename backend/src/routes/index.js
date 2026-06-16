@@ -1,8 +1,9 @@
 const express = require('express')
-const { authenticate } = require('../middleware/auth')
+const { authenticate, authorize } = require('../middleware/auth')
 
 const auth = require('./auth.routes')
 const dashboard = require('./dashboard.routes')
+const users = require('./users.routes')
 const companies = require('./companies.routes')
 const companyAdmins = require('./companyAdmins.routes')
 const settings = require('./settings.routes')
@@ -30,5 +31,8 @@ router.use('/audit-logs', auditLogs)
 router.use('/onboarding', onboarding)
 router.use('/approvals', approvals)
 router.use('/analytics', analytics)
+
+// User Management — Super Admin only.
+router.use('/users', authorize('super_admin'), users)
 
 module.exports = router

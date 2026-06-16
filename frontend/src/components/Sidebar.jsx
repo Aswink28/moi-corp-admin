@@ -45,7 +45,7 @@ function NavItem({ item, collapsed }) {
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { user } = useAuth()
-  const groups = navGroupsFor(user?.role)
+  const groups = navGroupsFor(user)
   const w = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W
   return (
     <Box

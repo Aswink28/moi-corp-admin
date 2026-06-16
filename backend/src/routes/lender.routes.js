@@ -24,4 +24,11 @@ router.use((req, res, next) => {
 router.get('/companies', h(ctrl.listCompanies))
 router.get('/companies/:id', h(ctrl.getCompany))
 
+// POST /api/lender/investments       — receive + store one investor offer
+// GET  /api/lender/investments       — list stored offers (?companyId= &investorId=)
+// GET  /api/lender/investments/:id    — single stored offer
+router.post('/investments', h(ctrl.createInvestment))
+router.get('/investments', h(ctrl.listInvestments))
+router.get('/investments/:id', h(ctrl.getInvestment))
+
 module.exports = router

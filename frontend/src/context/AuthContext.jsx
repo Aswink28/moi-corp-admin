@@ -19,10 +19,14 @@ export function AuthProvider({ children }) {
       setLoading(false)
       return
     }
-    // Validate the session on load.
+    // Validate the session on load and refresh role + screen access.
     api
       .get('/auth/me')
-      .then((res) => setUser((u) => ({ ...u, ...res.data.data })))
+      .then((res) => setUser((u) => {
+        const next = { ...u, ...res.data.data }
+        localStorage.setItem('ca_user', JSON.stringify(next))
+        return next
+      }))
       .catch(() => {
         localStorage.removeItem('ca_token')
         localStorage.removeItem('ca_user')
@@ -46,8 +50,16 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  // True if the user may access a given Admin-Portal screen. A super_admin
+  // implicitly has every screen; everyone else uses their assigned `screens`.
+  const hasScreen = (key) => {
+    if (!user) return false
+    if (user.role === 'super_admin') return true
+    return Array.isArray(user.screens) && user.screens.includes(key)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasScreen }}>{children}</AuthContext.Provider>
   )
 }
 

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Box, LinearProgress } from '@mui/material'
-import ProtectedRoute, { RoleRoute } from './components/ProtectedRoute'
+import ProtectedRoute, { ScreenRoute } from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 
@@ -16,10 +16,7 @@ const Configuration = lazy(() => import('./pages/Configuration'))
 const Subscriptions = lazy(() => import('./pages/Subscriptions'))
 const Wallets = lazy(() => import('./pages/Wallets'))
 const AuditLogs = lazy(() => import('./pages/AuditLogs'))
-
-const MAKER = ['maker', 'super_admin', 'admin']
-const CHECKER = ['checker', 'super_admin', 'admin']
-const ADMIN = ['super_admin', 'admin']
+const UserManagement = lazy(() => import('./pages/UserManagement'))
 
 function PageFallback() {
   return (
@@ -45,20 +42,19 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/approvals" element={<Approvals />} />
 
-          {/* Maker */}
-          <Route path="/company-onboarding" element={<RoleRoute roles={MAKER}><CompanyOnboarding /></RoleRoute>} />
-          <Route path="/company-onboarding/:draftId" element={<RoleRoute roles={MAKER}><CompanyOnboarding /></RoleRoute>} />
+          {/* Screen access is enforced per-user via assigned screens */}
+          <Route path="/company-onboarding" element={<ScreenRoute screen="company-onboarding"><CompanyOnboarding /></ScreenRoute>} />
+          <Route path="/company-onboarding/:draftId" element={<ScreenRoute screen="company-onboarding"><CompanyOnboarding /></ScreenRoute>} />
+          <Route path="/companies" element={<ScreenRoute screen="companies"><Companies /></ScreenRoute>} />
+          <Route path="/company-analytics" element={<ScreenRoute screen="company-analytics"><CompanyAnalytics /></ScreenRoute>} />
+          <Route path="/company-admins" element={<ScreenRoute screen="company-admins"><CompanyAdmins /></ScreenRoute>} />
+          <Route path="/configuration" element={<ScreenRoute screen="configuration"><Configuration /></ScreenRoute>} />
+          <Route path="/subscriptions" element={<ScreenRoute screen="subscriptions"><Subscriptions /></ScreenRoute>} />
+          <Route path="/wallets" element={<ScreenRoute screen="wallets"><Wallets /></ScreenRoute>} />
+          <Route path="/audit-logs" element={<ScreenRoute screen="audit-logs"><AuditLogs /></ScreenRoute>} />
 
-          {/* Checker + Super Admin can browse companies */}
-          <Route path="/companies" element={<RoleRoute roles={CHECKER}><Companies /></RoleRoute>} />
-
-          {/* Super Admin only */}
-          <Route path="/company-analytics" element={<RoleRoute roles={ADMIN}><CompanyAnalytics /></RoleRoute>} />
-          <Route path="/company-admins" element={<RoleRoute roles={ADMIN}><CompanyAdmins /></RoleRoute>} />
-          <Route path="/configuration" element={<RoleRoute roles={ADMIN}><Configuration /></RoleRoute>} />
-          <Route path="/subscriptions" element={<RoleRoute roles={ADMIN}><Subscriptions /></RoleRoute>} />
-          <Route path="/wallets" element={<RoleRoute roles={ADMIN}><Wallets /></RoleRoute>} />
-          <Route path="/audit-logs" element={<RoleRoute roles={ADMIN}><AuditLogs /></RoleRoute>} />
+          {/* User Management — Super Admin only */}
+          <Route path="/users" element={<ScreenRoute screen="user-management" requireSuperAdmin><UserManagement /></ScreenRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

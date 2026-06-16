@@ -42,6 +42,17 @@ export const auditApi = {
   list: (params) => api.get('/audit-logs', { params }).then((r) => r.data.data),
 }
 
+// User Management (portal users with per-user screen access). Super Admin only.
+export const usersApi = {
+  screens: () => api.get('/users/screens').then((r) => r.data.data),
+  list: () => api.get('/users').then((r) => r.data.data),
+  get: (id) => api.get(`/users/${id}`).then((r) => r.data.data),
+  create: (body) => api.post('/users', body).then((r) => r.data.data),
+  update: (id, body) => api.patch(`/users/${id}`, body).then((r) => r.data.data),
+  setActive: (id, isActive) => api.patch(`/users/${id}/active`, { isActive }).then((r) => r.data.data),
+  remove: (id) => api.delete(`/users/${id}`).then((r) => r.data),
+}
+
 // Company Analytics (Super Admin 360° dashboard).
 export const analyticsApi = {
   company: (id) => api.get(`/analytics/company/${id}`).then((r) => r.data.data),

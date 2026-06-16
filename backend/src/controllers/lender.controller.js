@@ -10,4 +10,22 @@ async function getCompany(req, res) {
   res.json({ success: true, data })
 }
 
-module.exports = { listCompanies, getCompany }
+async function createInvestment(req, res) {
+  const data = await service.createInvestment(req.body)
+  res.status(201).json({ success: true, data })
+}
+
+async function listInvestments(req, res) {
+  const data = await service.listInvestments({
+    companyId: req.query.companyId,
+    investorId: req.query.investorId,
+  })
+  res.json({ success: true, count: data.length, data })
+}
+
+async function getInvestment(req, res) {
+  const data = await service.getInvestment(req.params.id)
+  res.json({ success: true, data })
+}
+
+module.exports = { listCompanies, getCompany, createInvestment, listInvestments, getInvestment }

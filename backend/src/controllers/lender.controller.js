@@ -17,8 +17,8 @@ async function createInvestment(req, res) {
 
 async function listInvestments(req, res) {
   const data = await service.listInvestments({
-    companyId: req.query.companyId,
-    investorId: req.query.investorId,
+    companyCode: req.query.companyCode,
+    investorCode: req.query.investorCode,
   })
   res.json({ success: true, count: data.length, data })
 }

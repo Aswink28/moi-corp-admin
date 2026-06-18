@@ -247,6 +247,19 @@ async function createInvestment(offer = {}) {
   const externalId = `INV-${hashInt(requestId || JSON.stringify(offer))}`
   const receivedAt = new Date().toISOString()
 
+  // Business-friendly identifiers — the payload uses these instead of UUIDs.
+  const companyCode = str(offer.companyCode)
+  const investorCode = str(offer.investorCode)
+  const investorName = str(offer.investorName)
+
+  // Resolve companyCode → company_id (best-effort) so the relational link to the
+  // companies table is preserved when the code matches a known company.
+  let companyId = null
+  if (companyCode) {
+    const { rows: c } = await pool.query('SELECT id FROM companies WHERE code = $1', [companyCode])
+    companyId = c[0]?.id || null
+  }
+
   // The response we echo back to the caller (also persisted for the record).
   const response = {
     externalId,
@@ -257,17 +270,20 @@ async function createInvestment(offer = {}) {
 
   const { rows } = await pool.query(
     `INSERT INTO lender_investments
-       (external_id, request_id, company_id, company_name, investor_id, investor_email,
+       (external_id, request_id, company_id, company_code, company_name,
+        investor_code, investor_name, investor_email,
         amount, interest_rate_pct, tenure_months, total_interest, total_return,
         submitted_at, schedule, request_payload, response_payload, status, received_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
      RETURNING id, created_at`,
     [
       externalId,
       uuidOrNull(offer.requestId),
-      uuidOrNull(offer.companyId),
+      companyId,
+      companyCode,
       str(offer.companyName),
-      uuidOrNull(offer.investorId),
+      investorCode,
+      investorName,
       str(offer.investorEmail),
       numOrNull(offer.amount),
       numOrNull(offer.interestRatePct),
@@ -286,14 +302,14 @@ async function createInvestment(offer = {}) {
   return { id: rows[0].id, ...response }
 }
 
-/** List stored investor offers (optional ?companyId= / ?investorId= filters). */
+/** List stored investor offers (optional ?companyCode= / ?investorCode= filters). */
 async function listInvestments(filters = {}) {
   const where = []
   const params = []
-  const companyId = uuidOrNull(filters.companyId)
-  const investorId = uuidOrNull(filters.investorId)
-  if (companyId) { params.push(companyId); where.push(`company_id = $${params.length}`) }
-  if (investorId) { params.push(investorId); where.push(`investor_id = $${params.length}`) }
+  const companyCode = str(filters.companyCode)
+  const investorCode = str(filters.investorCode)
+  if (companyCode) { params.push(companyCode); where.push(`company_code = $${params.length}`) }
+  if (investorCode) { params.push(investorCode); where.push(`investor_code = $${params.length}`) }
   const sql =
     `SELECT * FROM lender_investments
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}

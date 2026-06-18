@@ -433,3 +433,12 @@ CREATE TABLE IF NOT EXISTS lender_investments (
 CREATE INDEX IF NOT EXISTS idx_lender_investments_company  ON lender_investments(company_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_lender_investments_investor ON lender_investments(investor_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_lender_investments_request  ON lender_investments(request_id);
+
+-- Business-friendly identifiers (the POST payload uses these instead of UUIDs):
+-- companyCode (resolved to company_id when it matches a company), investorCode,
+-- and investorName.
+ALTER TABLE lender_investments ADD COLUMN IF NOT EXISTS company_code  VARCHAR(60);
+ALTER TABLE lender_investments ADD COLUMN IF NOT EXISTS investor_code VARCHAR(80);
+ALTER TABLE lender_investments ADD COLUMN IF NOT EXISTS investor_name VARCHAR(190);
+CREATE INDEX IF NOT EXISTS idx_lender_investments_company_code  ON lender_investments(company_code);
+CREATE INDEX IF NOT EXISTS idx_lender_investments_investor_code ON lender_investments(investor_code);

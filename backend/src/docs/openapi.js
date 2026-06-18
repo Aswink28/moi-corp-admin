@@ -386,15 +386,16 @@ const definition = {
           'One investor offer, fired once per offer on submit so the company can compare all offers. ' +
           'Any 2xx response means accepted (the external id is optionally echoed back).',
         required: [
-          'requestId', 'companyId', 'companyName', 'investorId', 'investorEmail',
+          'requestId', 'companyCode', 'companyName', 'investorCode', 'investorName', 'investorEmail',
           'amount', 'interestRatePct', 'tenureMonths', 'totalInterest', 'totalReturn',
           'submittedAt', 'schedule',
         ],
         properties: {
           requestId: { type: 'string', format: 'uuid', description: 'Our offer id — echoed back in the decision' },
-          companyId: { type: 'string', format: 'uuid', description: 'Which company the offer targets' },
+          companyCode: { type: 'string', description: 'Business code of the company the offer targets (e.g. "TCS")' },
           companyName: { type: 'string', description: 'Target company name' },
-          investorId: { type: 'string', format: 'uuid', description: 'Who is offering' },
+          investorCode: { type: 'string', description: 'Business code of the investor making the offer' },
+          investorName: { type: 'string', description: 'Investor name' },
           investorEmail: { type: 'string', format: 'email', description: 'Investor email' },
           amount: { type: 'number', description: 'Offered investment amount (INR)' },
           interestRatePct: { type: 'number', description: "Investor's chosen rate (≤ company's offered rate)" },
@@ -410,9 +411,10 @@ const definition = {
         },
         example: {
           requestId: '',
-          companyId: '',
+          companyCode: '',
           companyName: '',
-          investorId: '',
+          investorCode: '',
+          investorName: '',
           investorEmail: '',
           amount: '',
           interestRatePct: '',
@@ -445,9 +447,11 @@ const definition = {
           id: { type: 'string', format: 'uuid' },
           external_id: { type: 'string', example: 'INV-1837465021' },
           request_id: { type: 'string', format: 'uuid', nullable: true },
-          company_id: { type: 'string', format: 'uuid', nullable: true },
+          company_id: { type: 'string', format: 'uuid', nullable: true, description: 'Resolved from company_code when it matches a known company' },
+          company_code: { type: 'string', nullable: true },
           company_name: { type: 'string', nullable: true },
-          investor_id: { type: 'string', format: 'uuid', nullable: true },
+          investor_code: { type: 'string', nullable: true },
+          investor_name: { type: 'string', nullable: true },
           investor_email: { type: 'string', nullable: true },
           amount: { type: 'number', nullable: true },
           interest_rate_pct: { type: 'number', nullable: true },
@@ -823,11 +827,11 @@ const definition = {
       get: {
         tags: ['Lender Portal'],
         summary: 'List stored investor offers',
-        description: 'Returns persisted offers from the lender_investments table. Optional companyId / investorId filters.',
+        description: 'Returns persisted offers from the lender_investments table. Optional companyCode / investorCode filters.',
         security: [{ lenderApiKey: [] }],
         parameters: [
-          { name: 'companyId', in: 'query', schema: { type: 'string', format: 'uuid' }, description: 'Filter by target company' },
-          { name: 'investorId', in: 'query', schema: { type: 'string', format: 'uuid' }, description: 'Filter by investor' },
+          { name: 'companyCode', in: 'query', schema: { type: 'string' }, description: 'Filter by target company code' },
+          { name: 'investorCode', in: 'query', schema: { type: 'string' }, description: 'Filter by investor code' },
         ],
         responses: {
           200: ok({

@@ -1,5 +1,8 @@
 node_modules/
-.env
+# Single committed `.env` holds dev values (secrets redacted); edit on server.
+# Ignore only local overrides / secret overlays.
+.env.*.local
+*.secrets
 *.log
 logs/
 dist/

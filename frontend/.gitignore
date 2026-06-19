@@ -1,5 +1,5 @@
 node_modules/
 dist/
-.env
+# Single committed `.env` holds config (no secrets); ignore only local overrides.
 *.local
 .DS_Store

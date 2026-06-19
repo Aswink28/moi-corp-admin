@@ -1,11 +1,12 @@
 # ── Dependencies ──────────────────────────────────────────────
 node_modules/
 
-# ── Environment files (contain secrets — never commit) ────────
-# Keep `.env.example` as a checked-in template; ignore everything else.
-.env
-.env.*
-!.env.example
+# ── Environment files ─────────────────────────────────────────
+# Single `.env` per app (mirror of the frontend). The committed `.env` holds
+# development values; on a server you edit its values for that environment.
+# No per-environment files; real production secrets are filled in on the server.
+.env.*.local
+*.secrets
 
 # ── Build / distribution artifacts ────────────────────────────
 build/

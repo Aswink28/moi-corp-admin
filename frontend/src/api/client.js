@@ -1,10 +1,9 @@
 import axios from 'axios'
 
-// Resolution order: runtime config (public/config.js, editable post-build) →
-// build-time env (VITE_API_BASE_URL) → relative '/api' (same-origin proxy).
-// This keeps the deployed app configurable by editing config.js only — no rebuild.
-const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
-export const baseURL = runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '/api'
+// API base URL — read from the single .env at build time (VITE_API_BASE_URL),
+// defaulting to the relative '/api' (served same-origin behind a reverse proxy).
+// Nothing here is hardcoded; change the value in .env, not in source.
+export const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Server origin (the API base WITHOUT the trailing /api) — used to build absolute
 // URLs for backend-served assets (logos, invoices). Empty string when baseURL is

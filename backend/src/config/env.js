@@ -8,7 +8,28 @@
  * environment by editing `.env` only (see `.env.example`); no code changes.
  */
 const path = require('path')
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') })
+const fs = require('fs')
+const dotenv = require('dotenv')
+
+// Resolve the single `.env` against cwd + this module's dir + their parents, and
+// load the first match. Works both in dev (run from backend/) and in the bundled
+// build (dist/index.js next to dist/.env, launched via start.cmd which cd's there).
+const seen = new Set()
+const candidateRoots = []
+for (const start of [process.cwd(), __dirname]) {
+  let dir = start
+  while (dir && !seen.has(dir)) {
+    seen.add(dir)
+    candidateRoots.push(dir)
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+}
+for (const root of candidateRoots) {
+  const full = path.join(root, '.env')
+  if (fs.existsSync(full)) { dotenv.config({ path: full }); break }
+}
 
 // Required env var — throws a clear error at boot if unset/empty.
 function required(name) {

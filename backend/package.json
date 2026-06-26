@@ -8,6 +8,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "build": "ncc build src/server.js -o dist --minify --source-map && node scripts/postbuild.js",
+    "start:dist": "node dist/index.js",
     "migrate": "node src/db/migrate.js",
     "seed": "node src/db/seed.js",
     "seed:users": "node src/db/seedUsers.js",
@@ -29,6 +31,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@vercel/ncc": "^0.38.4",
     "nodemon": "^3.1.4"
   },
   "engines": {

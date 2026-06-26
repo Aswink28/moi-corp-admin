@@ -5,6 +5,7 @@ import {
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
+import { assetBase } from '../../api/client'
 
 const PLAN_LABELS = {
   trial: 'Trial', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise',
@@ -26,8 +27,7 @@ const show = (v) => (v === 0 ? '0' : v ? String(v) : '—')
 function resolveLogoUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${assetBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 function SectionCard({ title, subtitle, children }) {

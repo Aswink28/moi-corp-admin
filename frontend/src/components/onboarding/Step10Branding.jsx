@@ -7,15 +7,14 @@ import { alpha } from '@mui/material/styles'
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import { onboardingApi } from '../../api/endpoints'
-import { errMsg } from '../../api/client'
+import { errMsg, assetBase } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 
 // Resolve a backend-served upload path (e.g. /uploads/logos/x.png) against the API origin.
 function resolveLogoUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${assetBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 const HEX_RE = /^#?[0-9a-fA-F]{6}$/

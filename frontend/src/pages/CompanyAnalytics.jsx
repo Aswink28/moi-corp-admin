@@ -25,15 +25,14 @@ import { PageHeader, StatCard, StatusBadge } from '../components/ui'
 import { SectionCard, Trend, Bars, Donut, RankedList, Heatmap, PALETTE } from '../components/analytics/Charts'
 import HealthGauge from '../components/analytics/HealthGauge'
 import { companiesApi, analyticsApi } from '../api/endpoints'
-import { errMsg } from '../api/client'
+import { errMsg, assetBase } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import { fmtMoney, fmtDate } from '../utils/format'
 
 const resolveLogo = (url) => {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${assetBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 // Small inline metric (label + bold value) used inside sections.

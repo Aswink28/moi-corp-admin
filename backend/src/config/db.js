@@ -6,15 +6,19 @@ const { Pool } = require('pg')
 const config = require('./env')
 
 const pool = config.db.connectionString
-  ? new Pool({ connectionString: config.db.connectionString })
+  ? new Pool({
+      connectionString: config.db.connectionString,
+      max: config.db.poolMax,
+      idleTimeoutMillis: config.db.idleTimeoutMs,
+    })
   : new Pool({
       host: config.db.host,
       port: config.db.port,
       database: config.db.database,
       user: config.db.user,
       password: config.db.password,
-      max: 10,
-      idleTimeoutMillis: 30000,
+      max: config.db.poolMax,
+      idleTimeoutMillis: config.db.idleTimeoutMs,
     })
 
 pool.on('error', (err) => {

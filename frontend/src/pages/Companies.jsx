@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
-  Box, Button, IconButton, Tooltip, TextField, MenuItem, Grid, Typography, Avatar, Stack,
+  Box, IconButton, Tooltip, TextField, MenuItem, Grid, Typography, Avatar, Stack,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded'
@@ -117,7 +116,6 @@ export default function Companies() {
       <PageHeader
         title="Companies"
         subtitle="Browse client companies and their approval workflow"
-        actions={isSuper ? <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button> : null}
       />
 
       <DataTable
@@ -130,7 +128,6 @@ export default function Companies() {
           icon: <BusinessRoundedIcon sx={{ fontSize: 42 }} />,
           title: 'No companies onboarded yet',
           description: 'Companies appear here once a Maker submits an onboarding request.',
-          action: isSuper ? <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialog({ mode: 'create', data: { ...EMPTY } })}>Create Company</Button> : null,
         }}
       />
 

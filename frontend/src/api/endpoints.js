@@ -1,4 +1,4 @@
-import api from './client'
+import api, { baseURL } from './client'
 
 export const dashboardApi = {
   stats: () => api.get('/dashboard/stats').then((r) => r.data.data),
@@ -131,7 +131,7 @@ export const onboardingApi = {
 
   // Invoices
   getInvoiceHtmlUrl: (id) => {
-    const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+    const base = baseURL.replace(/\/$/, '')
     return `${base}/onboarding/invoices/${id}/html`
   },
 }

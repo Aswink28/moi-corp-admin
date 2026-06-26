@@ -10,7 +10,7 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded'
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import { onboardingApi } from '../../api/endpoints'
-import { errMsg } from '../../api/client'
+import { errMsg, assetBase } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 import { INDUSTRIES, withFallback } from './options'
 
@@ -18,8 +18,7 @@ import { INDUSTRIES, withFallback } from './options'
 function resolveLogoUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${assetBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 export default function Step1CompanyInfo({ data, setField, errors, meta }) {

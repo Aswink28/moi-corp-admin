@@ -26,7 +26,7 @@ import ExtensionRoundedIcon from '@mui/icons-material/ExtensionRounded'
 import { StatusBadge } from './ui'
 import WorkflowTracker from './WorkflowTracker'
 import { approvalsApi } from '../api/endpoints'
-import { errMsg } from '../api/client'
+import { errMsg, assetBase } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import { fmtMoney, fmtDate, fmtDateTime } from '../utils/format'
 import { actionLabel } from '../constants/workflow'
@@ -35,8 +35,7 @@ import { actionLabel } from '../constants/workflow'
 function resolveUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '').replace(/\/$/, '')
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+  return `${assetBase}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
 const blank = (v) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')

@@ -1,6 +1,15 @@
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
+// Resolution order: runtime config (public/config.js, editable post-build) →
+// build-time env (VITE_API_BASE_URL) → relative '/api' (same-origin proxy).
+// This keeps the deployed app configurable by editing config.js only — no rebuild.
+const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
+export const baseURL = runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '/api'
+
+// Server origin (the API base WITHOUT the trailing /api) — used to build absolute
+// URLs for backend-served assets (logos, invoices). Empty string when baseURL is
+// the relative '/api', which correctly yields same-origin asset URLs.
+export const assetBase = baseURL.replace(/\/api\/?$/, '').replace(/\/$/, '')
 
 const api = axios.create({ baseURL })
 

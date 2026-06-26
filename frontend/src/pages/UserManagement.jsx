@@ -45,6 +45,20 @@ export default function UserManagement() {
   useEffect(() => { load() }, []) // eslint-disable-line
 
   const set = (k, v) => setDialog((d) => ({ ...d, data: { ...d.data, [k]: v } }))
+
+  // Open Edit and auto-fetch the user's full record by id, so the form always
+  // reflects the latest server state (mobile/username/screens) rather than a
+  // possibly-stale list row. Opens instantly with the row data, then refreshes.
+  async function openEdit(r) {
+    const base = { id: r.id, name: r.name, email: r.email, mobile_number: r.mobile_number || '', username: r.username || '', password: '', role: r.role, is_active: r.is_active, screens: r.screens || [] }
+    setDialog({ mode: 'edit', data: base })
+    try {
+      const u = await usersApi.get(r.id)
+      setDialog((cur) => (cur?.mode === 'edit' && cur.data.id === r.id
+        ? { ...cur, data: { ...cur.data, name: u.name ?? cur.data.name, email: u.email ?? cur.data.email, mobile_number: u.mobile_number || '', username: u.username || '', role: u.role ?? cur.data.role, is_active: u.is_active, screens: u.screens || [] } }
+        : cur))
+    } catch (e) { notify(errMsg(e), 'error') }
+  }
   const toggleScreen = (key) => setDialog((d) => {
     const has = d.data.screens.includes(key)
     return { ...d, data: { ...d.data, screens: has ? d.data.screens.filter((s) => s !== key) : [...d.data.screens, key] } }
@@ -113,7 +127,7 @@ export default function UserManagement() {
       key: 'actions', header: '', align: 'right', sortable: false, exportable: false,
       render: (r) => (
         <Box sx={{ whiteSpace: 'nowrap' }}>
-          <Tooltip title="Edit"><IconButton size="small" onClick={() => setDialog({ mode: 'edit', data: { id: r.id, name: r.name, email: r.email, mobile_number: r.mobile_number || '', username: r.username || '', password: '', role: r.role, is_active: r.is_active, screens: r.screens || [] } })}><EditRoundedIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(r)}><EditRoundedIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => setConfirm({ id: r.id, name: r.name })}><DeleteRoundedIcon fontSize="small" /></IconButton></Tooltip>
         </Box>
       ),

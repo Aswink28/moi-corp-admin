@@ -1,4 +1,5 @@
 import { Box, Typography, Breadcrumbs, Link } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import { motion } from 'framer-motion'
 
@@ -14,7 +15,7 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
             <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 0.5, fontSize: 13 }}>
               {breadcrumbs.map((b, i) =>
                 b.to ? (
-                  <Link key={i} underline="hover" color="inherit" href={b.to} sx={{ fontSize: 13 }}>
+                  <Link key={i} component={RouterLink} to={b.to} underline="hover" color="inherit" sx={{ fontSize: 13 }}>
                     {b.label}
                   </Link>
                 ) : (

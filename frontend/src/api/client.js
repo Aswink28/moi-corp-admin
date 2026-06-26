@@ -26,7 +26,10 @@ api.interceptors.response.use(
     if (err.response && err.response.status === 401 && !err.config.url.includes('/auth/login')) {
       localStorage.removeItem('ca_token')
       localStorage.removeItem('ca_user')
-      if (window.location.pathname !== '/login') window.location.href = '/login'
+      // Hard redirect to login, prefixed with the app's base path so it works
+      // under /moi-corp-admin/ (BASE_URL is '/moi-corp-admin/').
+      const loginPath = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/login`
+      if (window.location.pathname !== loginPath) window.location.href = loginPath
     }
     return Promise.reject(err)
   }

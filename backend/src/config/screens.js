@@ -15,6 +15,7 @@ const SCREENS = [
   { key: 'configuration',      label: 'Configuration' },
   { key: 'subscriptions',      label: 'Subscriptions' },
   { key: 'wallets',            label: 'Wallets' },
+  { key: 'e-money-approval',   label: 'E-Money Approval' },
   { key: 'audit-logs',         label: 'Audit Logs' },
 ]
 

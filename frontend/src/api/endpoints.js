@@ -42,6 +42,18 @@ export const auditApi = {
   list: (params) => api.get('/audit-logs', { params }).then((r) => r.data.data),
 }
 
+// E-Money Approval — company wallet Load Money Requests (funds live in Product).
+export const eMoneyApi = {
+  companies: () => api.get('/e-money/companies').then((r) => r.data.data),
+  wallets: () => api.get('/e-money/wallets').then((r) => r.data.data),
+  // filters: { company_id, status, from, to, limit }
+  loadRequests: (params) => api.get('/e-money/load-requests', { params }).then((r) => r.data.data),
+  loadRequest: (id) => api.get(`/e-money/load-requests/${id}`).then((r) => r.data.data),
+  approve: (id) => api.post(`/e-money/load-requests/${id}/approve`).then((r) => r.data.data),
+  reject: (id, reason) => api.post(`/e-money/load-requests/${id}/reject`, { reason }).then((r) => r.data.data),
+  requestInfo: (id, note) => api.post(`/e-money/load-requests/${id}/request-info`, { note }).then((r) => r.data.data),
+}
+
 // User Management (portal users with per-user screen access). Super Admin only.
 export const usersApi = {
   screens: () => api.get('/users/screens').then((r) => r.data.data),

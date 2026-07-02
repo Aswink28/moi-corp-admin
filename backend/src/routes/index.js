@@ -13,6 +13,7 @@ const auditLogs = require('./auditLogs.routes')
 const onboarding = require('./onboarding.routes')
 const approvals = require('./approvals.routes')
 const analytics = require('./analytics.routes')
+const eMoney = require('./eMoney.routes')
 
 const router = express.Router()
 
@@ -31,6 +32,7 @@ router.use('/audit-logs', auditLogs)
 router.use('/onboarding', onboarding)
 router.use('/approvals', approvals)
 router.use('/analytics', analytics)
+router.use('/e-money', eMoney)
 
 // User Management — Super Admin only.
 router.use('/users', authorize('super_admin'), users)

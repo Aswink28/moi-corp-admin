@@ -5,6 +5,7 @@ import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSetting
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import CardMembershipRoundedIcon from '@mui/icons-material/CardMembershipRounded'
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
@@ -23,6 +24,7 @@ const ITEMS = {
   users:         { to: '/users', label: 'User Management', icon: <GroupRoundedIcon />, screen: 'user-management', superAdminOnly: true },
   subscriptions: { to: '/subscriptions', label: 'Subscriptions', icon: <CardMembershipRoundedIcon />, screen: 'subscriptions' },
   wallets:       { to: '/wallets', label: 'Wallets', icon: <AccountBalanceWalletRoundedIcon />, screen: 'wallets' },
+  emoney:        { to: '/e-money', label: 'E-Money Approval', icon: <PaymentsRoundedIcon />, screen: 'e-money-approval' },
   audit:         { to: '/audit-logs', label: 'Audit Logs', icon: <HistoryRoundedIcon />, screen: 'audit-logs' },
 }
 
@@ -31,7 +33,7 @@ const GROUPS = [
   { heading: 'Approvals', items: [ITEMS.approvals] },
   { heading: 'Management', items: [ITEMS.companies, ITEMS.onboard, ITEMS.admins, ITEMS.configuration] },
   { heading: 'Access Control', items: [ITEMS.users] },
-  { heading: 'Billing', items: [ITEMS.subscriptions, ITEMS.wallets] },
+  { heading: 'Billing', items: [ITEMS.subscriptions, ITEMS.wallets, ITEMS.emoney] },
   { heading: 'System', items: [ITEMS.audit] },
 ]
 

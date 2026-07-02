@@ -15,6 +15,7 @@ const CompanyAdmins = lazy(() => import('./pages/CompanyAdmins'))
 const Configuration = lazy(() => import('./pages/Configuration'))
 const Subscriptions = lazy(() => import('./pages/Subscriptions'))
 const Wallets = lazy(() => import('./pages/Wallets'))
+const EMoneyApproval = lazy(() => import('./pages/EMoneyApproval'))
 const AuditLogs = lazy(() => import('./pages/AuditLogs'))
 const UserManagement = lazy(() => import('./pages/UserManagement'))
 
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/configuration" element={<ScreenRoute screen="configuration"><Configuration /></ScreenRoute>} />
           <Route path="/subscriptions" element={<ScreenRoute screen="subscriptions"><Subscriptions /></ScreenRoute>} />
           <Route path="/wallets" element={<ScreenRoute screen="wallets"><Wallets /></ScreenRoute>} />
+          <Route path="/e-money" element={<ScreenRoute screen="e-money-approval"><EMoneyApproval /></ScreenRoute>} />
           <Route path="/audit-logs" element={<ScreenRoute screen="audit-logs"><AuditLogs /></ScreenRoute>} />
 
           {/* User Management — Super Admin only */}

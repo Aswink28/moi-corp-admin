@@ -94,4 +94,4 @@ function modulesFromOnboarding(modules) {
   return out
 }
 
-module.exports = { provisionToProduct, syncStatus, resetPassword, modulesFromOnboarding }
+module.exports = { call, provisionToProduct, syncStatus, resetPassword, modulesFromOnboarding }
